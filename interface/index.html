@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Human Capital Valuation — CACEIS</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    /* ─── Reset & Base ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple:   #3C3489;
+      --teal:     #085041;
+      --amber:    #BA7517;
+      --blue:     #0C447C;
+      --purple-light: #5850c8;
+      --teal-light:   #0d7a61;
+      --amber-light:  #d68d2a;
+
+      --bg:       #0d0d14;
+      --bg-card:  #13131f;
+      --bg-glass: rgba(255,255,255,0.04);
+      --border:   rgba(255,255,255,0.08);
+      --text:     #e8e8f0;
+      --muted:    #8888a8;
+      --white:    #ffffff;
+
+      --radius:   14px;
+      --radius-lg: 22px;
+      --shadow:   0 8px 32px rgba(0,0,0,0.45);
+      --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ─── Scrollbar ─────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--purple); border-radius: 3px; }
+
+    /* ─── Noise texture overlay ─────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+      opacity: 0.4;
+    }
+
+    /* ─── Utility ───────────────────────────────────────────────── */
+    .container { max-width: 1160px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+    /* ─── NAV ───────────────────────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      padding: 0 24px;
+      background: rgba(13,13,20,0.82);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border);
+      transition: background var(--transition);
+    }
+    .nav-inner {
+      max-width: 1160px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 64px;
+    }
+
+    /* Logo */
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; color: var(--white);
+    }
+    .logo-mark {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--purple) 0%, var(--blue) 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 13px; letter-spacing: -0.5px;
+      color: #fff; flex-shrink: 0;
+    }
+    .logo-text { font-size: 15px; font-weight: 700; letter-spacing: 0.02em; }
+    .logo-sub  { font-size: 10px; color: var(--muted); font-weight: 500; display: block; line-height: 1; }
+
+    /* Links */
+    .nav-links { display: flex; align-items: center; gap: 4px; list-style: none; }
+    .nav-links a {
+      padding: 7px 14px; border-radius: 8px;
+      color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500;
+      transition: color var(--transition), background var(--transition);
+    }
+    .nav-links a:hover, .nav-links a.active { color: var(--white); background: var(--bg-glass); }
+
+    /* Dropdown */
+    .nav-dropdown { position: relative; }
+    .nav-dropdown > button {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 8px;
+      background: var(--purple); color: #fff;
+      border: none; cursor: pointer; font-size: 14px; font-weight: 600;
+      transition: background var(--transition), transform var(--transition);
+    }
+    .nav-dropdown > button:hover { background: var(--purple-light); transform: translateY(-1px); }
+    .dropdown-menu {
+      position: absolute; top: calc(100% + 8px); right: 0;
+      min-width: 200px;
+      background: #1a1a2e; border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+      box-shadow: var(--shadow);
+      opacity: 0; transform: translateY(-8px) scale(0.97);
+      pointer-events: none; transition: opacity var(--transition), transform var(--transition);
+    }
+    .nav-dropdown:hover .dropdown-menu,
+    .nav-dropdown:focus-within .dropdown-menu {
+      opacity: 1; transform: translateY(0) scale(1); pointer-events: all;
+    }
+    .dropdown-menu a {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 16px; color: var(--text); text-decoration: none;
+      font-size: 13.5px; font-weight: 500;
+      transition: background var(--transition), color var(--transition);
+      border-bottom: 1px solid var(--border);
+    }
+    .dropdown-menu a:last-child { border-bottom: none; }
+    .dropdown-menu a:hover { background: var(--bg-glass); color: var(--white); }
+    .dropdown-menu a i { width: 16px; color: var(--muted); }
+
+    .hamburger { display: none; background: none; border: none; color: var(--text); font-size: 20px; cursor: pointer; }
+
+    /* ─── HERO ──────────────────────────────────────────────────── */
+    #hero {
+      min-height: 100vh; display: flex; align-items: center;
+      padding: 120px 0 80px;
+      position: relative; overflow: hidden;
+    }
+
+    /* Gradient orbs */
+    .orb {
+      position: absolute; border-radius: 50%; filter: blur(100px);
+      pointer-events: none; opacity: 0.18;
+    }
+    .orb-1 { width: 600px; height: 600px; background: var(--purple); top: -100px; left: -200px; animation: drift 18s ease-in-out infinite alternate; }
+    .orb-2 { width: 500px; height: 500px; background: var(--teal); bottom: -100px; right: -150px; animation: drift 22s ease-in-out infinite alternate-reverse; }
+    .orb-3 { width: 350px; height: 350px; background: var(--amber); top: 40%; left: 55%; animation: drift 14s ease-in-out infinite alternate; }
+
+    @keyframes drift {
+      from { transform: translate(0,0) scale(1); }
+      to   { transform: translate(40px, 30px) scale(1.08); }
+    }
+
+    /* Grid lines bg */
+    #hero::after {
+      content: '';
+      position: absolute; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+    }
+
+    .hero-content {
+      position: relative; z-index: 1;
+      max-width: 760px;
+    }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 14px; border-radius: 999px;
+      background: rgba(60,52,137,0.25); border: 1px solid rgba(60,52,137,0.5);
+      font-size: 12px; font-weight: 600; color: #a8a0ff; letter-spacing: 0.06em;
+      text-transform: uppercase; margin-bottom: 28px;
+    }
+    .hero-badge span { width: 6px; height: 6px; border-radius: 50%; background: #a8a0ff; animation: pulse 2s ease-in-out infinite; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    h1 {
+      font-size: clamp(36px, 5.5vw, 64px);
+      font-weight: 800; line-height: 1.1; letter-spacing: -0.03em;
+      color: var(--white);
+      margin-bottom: 20px;
+    }
+    h1 .accent {
+      background: linear-gradient(135deg, #a8a0ff 0%, var(--amber-light) 50%, #5cd9c0 100%);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .hero-sub {
+      font-size: 18px; color: var(--muted); max-width: 540px;
+      margin-bottom: 48px; line-height: 1.7;
+    }
+
+    /* KPI Row */
+    .kpi-row {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+      margin-bottom: 48px;
+    }
+    .kpi-card {
+      background: var(--bg-glass); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px 18px;
+      position: relative; overflow: hidden;
+      transition: border-color var(--transition), transform var(--transition);
+      cursor: default;
+    }
+    .kpi-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, var(--color1, var(--purple)) 0%, transparent 70%);
+      opacity: 0; transition: opacity var(--transition);
+    }
+    .kpi-card:hover { border-color: rgba(255,255,255,0.18); transform: translateY(-3px); }
+    .kpi-card:hover::before { opacity: 0.08; }
+
+    .kpi-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+    .kpi-value { font-size: 32px; font-weight: 800; letter-spacing: -0.03em; color: var(--white); line-height: 1; margin-bottom: 4px; }
+    .kpi-desc { font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+    .kpi-icon { position: absolute; top: 16px; right: 16px; font-size: 16px; opacity: 0.35; }
+
+    .kpi-card:nth-child(1) { --color1: var(--purple); }
+    .kpi-card:nth-child(1) .kpi-value { color: #a8a0ff; }
+    .kpi-card:nth-child(2) { --color1: var(--teal); }
+    .kpi-card:nth-child(2) .kpi-value { color: #5cd9c0; }
+    .kpi-card:nth-child(3) { --color1: var(--amber); }
+    .kpi-card:nth-child(3) .kpi-value { color: #f0b545; }
+    .kpi-card:nth-child(4) { --color1: var(--blue); }
+    .kpi-card:nth-child(4) .kpi-value { color: #6ab0f5; }
+
+    /* CTA Buttons */
+    .cta-group { display: flex; flex-wrap: wrap; gap: 14px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 13px 26px; border-radius: var(--radius);
+      font-size: 15px; font-weight: 600; cursor: pointer;
+      text-decoration: none; border: none;
+      transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--purple) 0%, var(--blue) 100%);
+      color: #fff; box-shadow: 0 4px 20px rgba(60,52,137,0.45);
+    }
+    .btn-primary:hover { box-shadow: 0 8px 30px rgba(60,52,137,0.6); }
+    .btn-ghost {
+      background: var(--bg-glass); color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.07); color: var(--white); }
+
+    /* ─── SECTION SHARED ────────────────────────────────────────── */
+    section { padding: 96px 0; position: relative; z-index: 1; }
+    .section-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 12px; display: block;
+    }
+    .section-title {
+      font-size: clamp(26px, 3.5vw, 40px); font-weight: 800; letter-spacing: -0.02em;
+      color: var(--white); margin-bottom: 16px; line-height: 1.2;
+    }
+    .section-sub {
+      font-size: 16px; color: var(--muted); max-width: 560px; line-height: 1.7;
+      margin-bottom: 56px;
+    }
+
+    /* Divider */
+    .section-divider {
+      border: none; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      margin: 0;
+    }
+
+    /* ─── VALUE PROPS ───────────────────────────────────────────── */
+    #value-props { background: var(--bg); }
+
+    .props-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;
+    }
+
+    .prop-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 36px;
+      position: relative; overflow: hidden;
+      transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+      cursor: default;
+    }
+    .prop-card::after {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(circle at 0% 0%, var(--card-accent, rgba(60,52,137,0.12)) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .prop-card:hover {
+      border-color: rgba(255,255,255,0.15);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+
+    .prop-card:nth-child(1) { --card-accent: rgba(60,52,137,0.18); }
+    .prop-card:nth-child(2) { --card-accent: rgba(8,80,65,0.18); }
+    .prop-card:nth-child(3) { --card-accent: rgba(186,117,23,0.15); }
+    .prop-card:nth-child(4) { --card-accent: rgba(12,68,124,0.18); }
+
+    .prop-icon-wrap {
+      width: 52px; height: 52px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; margin-bottom: 22px;
+      position: relative; z-index: 1;
+    }
+    .prop-card:nth-child(1) .prop-icon-wrap { background: rgba(60,52,137,0.3); color: #a8a0ff; }
+    .prop-card:nth-child(2) .prop-icon-wrap { background: rgba(8,80,65,0.3); color: #5cd9c0; }
+    .prop-card:nth-child(3) .prop-icon-wrap { background: rgba(186,117,23,0.3); color: #f0b545; }
+    .prop-card:nth-child(4) .prop-icon-wrap { background: rgba(12,68,124,0.3); color: #6ab0f5; }
+
+    .prop-title { font-size: 20px; font-weight: 700; color: var(--white); margin-bottom: 10px; position: relative; z-index: 1; }
+    .prop-desc { font-size: 14.5px; color: var(--muted); line-height: 1.7; margin-bottom: 20px; position: relative; z-index: 1; }
+
+    .prop-tags { display: flex; flex-wrap: wrap; gap: 8px; position: relative; z-index: 1; }
+    .tag {
+      padding: 4px 11px; border-radius: 999px;
+      font-size: 11.5px; font-weight: 600; letter-spacing: 0.02em;
+      background: rgba(255,255,255,0.06); color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .prop-card:nth-child(1) .tag { color: #a8a0ff; border-color: rgba(168,160,255,0.2); background: rgba(60,52,137,0.15); }
+    .prop-card:nth-child(2) .tag { color: #5cd9c0; border-color: rgba(92,217,192,0.2); background: rgba(8,80,65,0.15); }
+    .prop-card:nth-child(3) .tag { color: #f0b545; border-color: rgba(240,181,69,0.2); background: rgba(186,117,23,0.15); }
+    .prop-card:nth-child(4) .tag { color: #6ab0f5; border-color: rgba(106,176,245,0.2); background: rgba(12,68,124,0.15); }
+
+    /* ─── METHODOLOGY TIMELINE ──────────────────────────────────── */
+    #methodology {
+      background: linear-gradient(180deg, var(--bg) 0%, #0a0a15 100%);
+    }
+
+    .timeline {
+      position: relative;
+      display: grid; grid-template-columns: 1fr; gap: 0;
+      max-width: 720px;
+    }
+    .timeline::before {
+      content: ''; position: absolute; left: 23px; top: 0; bottom: 0; width: 2px;
+      background: linear-gradient(180deg, var(--purple) 0%, var(--teal) 50%, var(--amber) 100%);
+      opacity: 0.35;
+    }
+
+    .tl-item {
+      display: flex; gap: 28px; padding: 0 0 44px 0;
+      animation: fadeUp 0.5s ease both;
+    }
+    .tl-item:last-child { padding-bottom: 0; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .tl-dot {
+      flex-shrink: 0; width: 48px; height: 48px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; z-index: 1;
+    }
+    .tl-item:nth-child(1) .tl-dot { background: rgba(60,52,137,0.4); color: #a8a0ff; border: 2px solid rgba(60,52,137,0.6); }
+    .tl-item:nth-child(2) .tl-dot { background: rgba(8,80,65,0.4); color: #5cd9c0; border: 2px solid rgba(8,80,65,0.6); }
+    .tl-item:nth-child(3) .tl-dot { background: rgba(186,117,23,0.35); color: #f0b545; border: 2px solid rgba(186,117,23,0.55); }
+    .tl-item:nth-child(4) .tl-dot { background: rgba(12,68,124,0.4); color: #6ab0f5; border: 2px solid rgba(12,68,124,0.6); }
+
+    .tl-content { padding-top: 10px; }
+    .tl-step { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+    .tl-title { font-size: 18px; font-weight: 700; color: var(--white); margin-bottom: 8px; }
+    .tl-desc { font-size: 14px; color: var(--muted); line-height: 1.7; }
+
+    /* ─── ACCESS TIERS ──────────────────────────────────────────── */
+    #access-tiers { background: var(--bg); }
+
+    .tiers-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+    .tier-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 32px 28px;
+      position: relative; overflow: hidden;
+      transition: border-color var(--transition), transform var(--transition);
+      display: flex; flex-direction: column;
+    }
+    .tier-card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-4px); }
+
+    .tier-card.featured {
+      border-color: rgba(60,52,137,0.6);
+      background: linear-gradient(160deg, rgba(60,52,137,0.12) 0%, var(--bg-card) 60%);
+    }
+    .tier-card.featured::before {
+      content: 'Recommended';
+      position: absolute; top: 16px; right: 16px;
+      padding: 3px 10px; border-radius: 999px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+      background: rgba(60,52,137,0.4); color: #a8a0ff;
+      border: 1px solid rgba(60,52,137,0.5);
+    }
+
+    .tier-name { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+    .tier-title { font-size: 22px; font-weight: 800; color: var(--white); margin-bottom: 16px; }
+    .tier-desc { font-size: 14px; color: var(--muted); line-height: 1.7; margin-bottom: 24px; }
+
+    .tier-features { list-style: none; margin-bottom: 32px; flex: 1; }
+    .tier-features li {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 13.5px; color: var(--text); padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .tier-features li:last-child { border-bottom: none; }
+    .tier-features li i { font-size: 13px; margin-top: 2px; flex-shrink: 0; }
+    .tier-card:nth-child(1) .tier-features li i { color: #5cd9c0; }
+    .tier-card:nth-child(2) .tier-features li i { color: #a8a0ff; }
+    .tier-card:nth-child(3) .tier-features li i { color: #f0b545; }
+
+    .tier-btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px 20px; border-radius: var(--radius);
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      text-decoration: none; border: 1px solid var(--border);
+      background: var(--bg-glass); color: var(--text);
+      transition: background var(--transition), color var(--transition), border-color var(--transition), transform var(--transition);
+    }
+    .tier-btn:hover { background: rgba(255,255,255,0.08); color: var(--white); border-color: rgba(255,255,255,0.2); transform: translateY(-1px); }
+    .tier-card.featured .tier-btn {
+      background: linear-gradient(135deg, var(--purple) 0%, var(--blue) 100%);
+      border-color: transparent; color: #fff;
+    }
+    .tier-card.featured .tier-btn:hover { box-shadow: 0 6px 24px rgba(60,52,137,0.5); }
+
+    /* ─── STATS BAND ────────────────────────────────────────────── */
+    .stats-band {
+      background: linear-gradient(90deg, rgba(60,52,137,0.15) 0%, rgba(8,80,65,0.15) 50%, rgba(12,68,124,0.15) 100%);
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      padding: 48px 0;
+    }
+    .stats-inner {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px;
+      max-width: 1160px; margin: 0 auto; padding: 0 24px;
+      text-align: center;
+    }
+    .stat-item {}
+    .stat-num { font-size: 36px; font-weight: 800; letter-spacing: -0.03em; color: var(--white); line-height: 1; margin-bottom: 6px; }
+    .stat-lbl { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+
+    /* ─── FOOTER ────────────────────────────────────────────────── */
+    footer {
+      background: #090910; border-top: 1px solid var(--border);
+      padding: 56px 0 32px; position: relative; z-index: 1;
+    }
+    .footer-inner {
+      max-width: 1160px; margin: 0 auto; padding: 0 24px;
+    }
+    .footer-top {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      flex-wrap: wrap; gap: 40px; margin-bottom: 48px;
+    }
+    .footer-brand {}
+    .footer-brand .logo-text { font-size: 18px; color: var(--white); }
+    .footer-brand p { font-size: 13px; color: var(--muted); max-width: 300px; margin-top: 10px; line-height: 1.6; }
+
+    .footer-links { display: flex; gap: 56px; flex-wrap: wrap; }
+    .footer-col {}
+    .footer-col h4 { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+    .footer-col a {
+      display: block; font-size: 13.5px; color: var(--muted);
+      text-decoration: none; margin-bottom: 10px;
+      transition: color var(--transition);
+    }
+    .footer-col a:hover { color: var(--white); }
+
+    .footer-bottom {
+      border-top: 1px solid var(--border); padding-top: 28px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 16px;
+    }
+    .footer-copy { font-size: 12.5px; color: var(--muted); }
+    .footer-badges { display: flex; gap: 12px; flex-wrap: wrap; }
+    .badge {
+      padding: 4px 12px; border-radius: 999px;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+      border: 1px solid var(--border); color: var(--muted);
+    }
+
+    /* ─── TOAST ─────────────────────────────────────────────────── */
+    #toast {
+      position: fixed; bottom: 28px; right: 28px; z-index: 9999;
+      background: #1e1e30; border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 20px;
+      font-size: 14px; color: var(--text);
+      display: flex; align-items: center; gap: 10px;
+      box-shadow: var(--shadow);
+      transform: translateY(20px); opacity: 0;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      pointer-events: none;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast i { color: #5cd9c0; }
+
+    /* ─── RESPONSIVE ────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .kpi-row { grid-template-columns: repeat(2, 1fr); }
+      .props-grid { grid-template-columns: 1fr; }
+      .tiers-grid { grid-template-columns: 1fr; }
+      .stats-inner { grid-template-columns: repeat(2, 1fr); }
+      .nav-links, .nav-dropdown { display: none; }
+      .hamburger { display: block; }
+      .footer-top { flex-direction: column; }
+      .footer-links { gap: 32px; }
+    }
+    @media (max-width: 600px) {
+      .kpi-row { grid-template-columns: 1fr 1fr; }
+      .stats-inner { grid-template-columns: 1fr 1fr; }
+      h1 { font-size: 32px; }
+      .cta-group { flex-direction: column; }
+      .btn { justify-content: center; }
+      .footer-bottom { flex-direction: column; text-align: center; }
+    }
+
+    /* ─── Scroll-reveal utility ─────────────────────────────────── */
+    .reveal {
+      opacity: 0; transform: translateY(24px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════ NAV ══════════════════════════════════ -->
+  <nav id="navbar">
+    <div class="nav-inner">
+
+      <a href="#hero" class="nav-logo" aria-label="CACEIS Home">
+        <div class="logo-mark">CA<br>CEIS</div>
+        <div>
+          <span class="logo-text">CACEIS</span>
+          <span class="logo-sub">Human Capital Valuation</span>
+        </div>
+      </a>
+
+      <ul class="nav-links" role="list">
+        <li><a href="#hero" class="active">Overview</a></li>
+        <li><a href="#value-props">Framework</a></li>
+        <li><a href="#methodology">Methodology</a></li>
+        <li><a href="#access-tiers">Access Tiers</a></li>
+      </ul>
+
+      <div class="nav-dropdown" role="navigation" aria-label="Request Access">
+        <button aria-haspopup="true" aria-expanded="false">
+          Request Access <i class="fa-solid fa-chevron-down fa-xs"></i>
+        </button>
+        <div class="dropdown-menu" role="menu">
+          <a href="pilot-bu-dashboard.html" role="menuitem">
+            <i class="fa-solid fa-gauge-high"></i> Pilot Dashboard
+          </a>
+          <a href="#" role="menuitem" onclick="showToast('Documentation link sent to your email'); return false;">
+            <i class="fa-solid fa-book"></i> Technical Docs
+          </a>
+          <a href="#" role="menuitem" onclick="showToast('API credentials request submitted'); return false;">
+            <i class="fa-solid fa-code"></i> API Access
+          </a>
+          <a href="#" role="menuitem" onclick="showToast('Your request has been forwarded to the team'); return false;">
+            <i class="fa-solid fa-envelope"></i> Contact Team
+          </a>
+        </div>
+      </div>
+
+      <button class="hamburger" aria-label="Toggle menu" onclick="toggleMobileMenu()">
+        <i class="fa-solid fa-bars" id="hamburger-icon"></i>
+      </button>
+
+    </div>
+  </nav>
+
+  <!-- Mobile nav overlay -->
+  <div id="mobile-nav" style="
+    display:none; position:fixed; inset:0; z-index:999;
+    background:rgba(9,9,16,0.97); backdrop-filter:blur(20px);
+    flex-direction:column; align-items:center; justify-content:center; gap:8px;
+  ">
+    <a href="#hero" onclick="closeMobile()" style="font-size:22px;font-weight:700;color:#fff;text-decoration:none;padding:14px 32px;border-radius:12px;">Overview</a>
+    <a href="#value-props" onclick="closeMobile()" style="font-size:22px;font-weight:700;color:#fff;text-decoration:none;padding:14px 32px;border-radius:12px;">Framework</a>
+    <a href="#methodology" onclick="closeMobile()" style="font-size:22px;font-weight:700;color:#fff;text-decoration:none;padding:14px 32px;border-radius:12px;">Methodology</a>
+    <a href="#access-tiers" onclick="closeMobile()" style="font-size:22px;font-weight:700;color:#fff;text-decoration:none;padding:14px 32px;border-radius:12px;">Access Tiers</a>
+    <button onclick="closeMobile()" style="margin-top:24px;background:none;border:none;color:#8888a8;font-size:14px;cursor:pointer;"><i class="fa-solid fa-xmark"></i> Close</button>
+  </div>
+
+  <!-- ═══════════════════════════════════ HERO ═════════════════════════════════ -->
+  <section id="hero">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <div class="container">
+      <div class="hero-content">
+
+        <div class="hero-badge">
+          <span></span>
+          AlbertSchool Hackathon · Deliverable 2 · April 30, 2025
+        </div>
+
+        <h1>Valuing <span class="accent">Human Capital</span><br>at CACEIS</h1>
+
+        <p class="hero-sub">
+          A measurable, sovereign, and explainable framework built on CACEIS's own data — turning people metrics into financial levers for leadership.
+        </p>
+
+        <!-- KPI Row -->
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <i class="fa-solid fa-star kpi-icon"></i>
+            <div class="kpi-label">Engagement Score</div>
+            <div class="kpi-value" id="hero-kpi-Y">Y = 3.41</div>
+            <div class="kpi-desc">Weighted IMR composite index across 4 survey waves</div>
+          </div>
+          <div class="kpi-card">
+            <i class="fa-solid fa-graduation-cap kpi-icon"></i>
+            <div class="kpi-label">Training Intensity</div>
+            <div class="kpi-value" id="hero-kpi-L">λ = 68h</div>
+            <div class="kpi-desc">Average hours/employee/year · certified programmes</div>
+          </div>
+          <div class="kpi-card">
+            <i class="fa-solid fa-chart-line kpi-icon"></i>
+            <div class="kpi-label">Performance Index</div>
+            <div class="kpi-value" id="hero-kpi-B">β = 4.46</div>
+            <div class="kpi-desc">Mean EAE score · 5 766 individual evaluations 2024</div>
+          </div>
+          <div class="kpi-card">
+            <i class="fa-solid fa-arrow-trend-up kpi-icon"></i>
+            <div class="kpi-label">NBI / FTE Growth</div>
+            <div class="kpi-value" id="hero-kpi-P">P = +0.07</div>
+            <div class="kpi-desc">Net Banking Income per FTE · CAGR 2022→2025</div>
+          </div>
+        </div>
+
+        <!-- CTAs -->
+        <div class="cta-group">
+          <a href="#access-tiers" class="btn btn-primary">
+            <i class="fa-solid fa-gauge-high"></i> Accéder au Dashboard
+          </a>
+          <a href="#methodology" class="btn btn-ghost">
+            <i class="fa-solid fa-file-lines"></i> Technical Documentation
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <hr class="section-divider" />
+
+  <!-- ═══════════════════════════════ STATS BAND ═══════════════════════════════ -->
+  <div class="stats-band">
+    <div class="stats-inner">
+      <div class="stat-item reveal">
+        <div class="stat-num" data-target="6616">0</div>
+        <div class="stat-lbl">FTEs covered</div>
+      </div>
+      <div class="stat-item reveal">
+        <div class="stat-num" data-target="14">0</div>
+        <div class="stat-lbl">Countries</div>
+      </div>
+      <div class="stat-item reveal">
+        <div class="stat-num" data-target="5">0</div>
+        <div class="stat-lbl">Data sources</div>
+      </div>
+      <div class="stat-item reveal">
+        <div class="stat-num" data-target="3">0</div>
+        <div class="stat-lbl">Action levers / BU</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════ VALUE PROPS ════════════════════════════ -->
+  <section id="value-props">
+    <div class="container">
+      <span class="section-label reveal"><i class="fa-solid fa-sparkles"></i> &nbsp;Core Principles</span>
+      <h2 class="section-title reveal">Four pillars of a<br>trustworthy framework</h2>
+      <p class="section-sub reveal">Each design choice was made to maximise adoption by CACEIS leadership while respecting data sovereignty and regulatory constraints.</p>
+
+      <div class="props-grid">
+
+        <div class="prop-card reveal">
+          <div class="prop-icon-wrap"><i class="fa-solid fa-database"></i></div>
+          <h3 class="prop-title">Data-Native</h3>
+          <p class="prop-desc">
+            Every indicator is computed from datasets that already exist within CACEIS — IMR surveys, EAE evaluations, payroll data, absenteeism records, and training logs. No external benchmarks required to produce a first score.
+          </p>
+          <div class="prop-tags">
+            <span class="tag">IMR 2021–2025</span>
+            <span class="tag">EAE 5 766 rows</span>
+            <span class="tag">Absenteeism detail</span>
+            <span class="tag">P&L / FTE</span>
+          </div>
+        </div>
+
+        <div class="prop-card reveal">
+          <div class="prop-icon-wrap"><i class="fa-solid fa-shield-halved"></i></div>
+          <h3 class="prop-title">Sovereign</h3>
+          <p class="prop-desc">
+            The RAG layer runs on Mistral (French sovereign AI). Vector storage uses pgvector on-premises. No employee data ever leaves the CACEIS perimeter — fully compliant with GDPR and the Crédit Agricole Group's data governance policy.
+          </p>
+          <div class="prop-tags">
+            <span class="tag">Mistral RAG</span>
+            <span class="tag">pgvector on-prem</span>
+            <span class="tag">GDPR-ready</span>
+            <span class="tag">CA Group compliant</span>
+          </div>
+        </div>
+
+        <div class="prop-card reveal">
+          <div class="prop-icon-wrap"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+          <h3 class="prop-title">Explainable</h3>
+          <p class="prop-desc">
+            Every recommendation surfaces its source — the document, the data row, the formula. Managers can audit the reasoning chain end-to-end. No black box: the model cites before it concludes.
+          </p>
+          <div class="prop-tags">
+            <span class="tag">Source citations</span>
+            <span class="tag">Formula audit trail</span>
+            <span class="tag">Confidence scores</span>
+            <span class="tag">Manager-readable</span>
+          </div>
+        </div>
+
+        <div class="prop-card reveal">
+          <div class="prop-icon-wrap"><i class="fa-solid fa-bolt"></i></div>
+          <h3 class="prop-title">Actionable</h3>
+          <p class="prop-desc">
+            Output is not a score — it is three concrete levers per BU. Each lever links a measured gap (engagement, training, absenteeism) to a financial impact estimate and a recommended HR programme already available at CACEIS.
+          </p>
+          <div class="prop-tags">
+            <span class="tag">3 levers / BU</span>
+            <span class="tag">Financial impact €</span>
+            <span class="tag">Existing programmes</span>
+            <span class="tag">Priority ranking</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <hr class="section-divider" />
+
+  <!-- ══════════════════════════════ METHODOLOGY ══════════════════════════════ -->
+  <section id="methodology">
+    <div class="container" style="display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start;">
+
+      <div>
+        <span class="section-label reveal"><i class="fa-solid fa-diagram-project"></i> &nbsp;Methodology</span>
+        <h2 class="section-title reveal">How the model<br>is constructed</h2>
+        <p class="section-sub reveal" style="margin-bottom:0;">
+          A four-step pipeline from raw HRIS exports to board-ready financial impact estimates — reproducible, versionable, and auditable at each stage.
+        </p>
+      </div>
+
+      <div class="timeline">
+
+        <div class="tl-item reveal">
+          <div class="tl-dot"><i class="fa-solid fa-layer-group"></i></div>
+          <div class="tl-content">
+            <div class="tl-step">Step 01</div>
+            <div class="tl-title">Data Ingestion & Normalisation</div>
+            <div class="tl-desc">Six source files harmonised into a single anonymised employee-level fact table: EAE scores, IMR survey items, training hours, absenteeism days, compensation bands, and headcount. Deduplication, anonymisation, and schema validation applied.</div>
+          </div>
+        </div>
+
+        <div class="tl-item reveal">
+          <div class="tl-dot"><i class="fa-solid fa-function"></i></div>
+          <div class="tl-content">
+            <div class="tl-step">Step 02</div>
+            <div class="tl-title">Composite Index Construction</div>
+            <div class="tl-desc">Four dimensions weighted by a principal component analysis calibrated on CACEIS data: Engagement (Y), Training intensity (λ), Performance rating (β), and Financial productivity (P = NBI/FTE). Each dimension normalised 0–5.</div>
+          </div>
+        </div>
+
+        <div class="tl-item reveal">
+          <div class="tl-dot"><i class="fa-solid fa-robot"></i></div>
+          <div class="tl-content">
+            <div class="tl-step">Step 03</div>
+            <div class="tl-title">RAG-Augmented Analysis</div>
+            <div class="tl-desc">Mistral runs over the document corpus (Bilans Sociaux, QVT accords, D&I barometers) using pgvector retrieval. The model contextualises the quantitative scores with qualitative programme data and surfaces gaps with cited evidence.</div>
+          </div>
+        </div>
+
+        <div class="tl-item reveal">
+          <div class="tl-dot"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+          <div class="tl-content">
+            <div class="tl-step">Step 04</div>
+            <div class="tl-title">Financial Impact Estimation</div>
+            <div class="tl-desc">Each lever is converted to a €-impact range using CACEIS's own NBI/FTE ratio (€316k per FTE in 2025) and published absenteeism cost benchmarks. Confidence intervals reported alongside point estimates.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <hr class="section-divider" />
+
+  <!-- ══════════════════════════════ ACCESS TIERS ══════════════════════════════ -->
+  <section id="access-tiers">
+    <div class="container">
+      <span class="section-label reveal"><i class="fa-solid fa-lock-open"></i> &nbsp;Access Tiers</span>
+      <h2 class="section-title reveal">Choose your access level</h2>
+      <p class="section-sub reveal">From executive summary to full data pipeline — three tiers calibrated to different stakeholder needs within CACEIS.</p>
+
+      <div class="tiers-grid">
+
+        <div class="tier-card featured reveal">
+          <div class="tier-name">Tier 1</div>
+          <div class="tier-title">Chief Officer</div>
+          <div class="tier-desc">Full access for COMEX members and BU Heads. All KPIs, AI-powered recommendations, BU benchmarking, trend projections, and composite V_HC index.</div>
+          <ul class="tier-features">
+            <li><i class="fa-solid fa-check"></i> All 5 KPI dimensions</li>
+            <li><i class="fa-solid fa-check"></i> BU comparison &amp; ranking</li>
+            <li><i class="fa-solid fa-check"></i> Full AI recommendations</li>
+            <li><i class="fa-solid fa-check"></i> Trend &amp; 5-year projection</li>
+            <li><i class="fa-solid fa-check"></i> V_HC composite index</li>
+            <li><i class="fa-solid fa-check"></i> Absenteeism analysis</li>
+          </ul>
+          <a href="pilot-bu-dashboard.html?tier=1" class="tier-btn" onclick="sessionStorage.setItem('hcv_tier','1')">
+            <i class="fa-solid fa-gauge-high"></i> Ouvrir en Tier 1
+          </a>
+        </div>
+
+        <div class="tier-card reveal">
+          <div class="tier-name">Tier 2</div>
+          <div class="tier-title">BU Leadership</div>
+          <div class="tier-desc">Aggregated BU view for HR Business Partners and BU Directors. KPI scorecards, benchmarking, and summarised action recommendations.</div>
+          <ul class="tier-features">
+            <li><i class="fa-solid fa-check"></i> All 5 KPI dimensions</li>
+            <li><i class="fa-solid fa-check"></i> BU comparison &amp; ranking</li>
+            <li><i class="fa-solid fa-check"></i> Summarised recommendations</li>
+            <li><i class="fa-regular fa-circle-xmark" style="color:#555;"></i> Trend projections</li>
+            <li><i class="fa-regular fa-circle-xmark" style="color:#555;"></i> V_HC composite index</li>
+            <li><i class="fa-regular fa-circle-xmark" style="color:#555;"></i> Absenteeism deep-dive</li>
+          </ul>
+          <a href="pilot-bu-dashboard.html?tier=2" class="tier-btn" onclick="sessionStorage.setItem('hcv_tier','2')">
+            <i class="fa-solid fa-chart-bar"></i> Ouvrir en Tier 2
+          </a>
+        </div>
+
+        <div class="tier-card reveal">
+          <div class="tier-name">Tier 3</div>
+          <div class="tier-title">Manager Opérationnel</div>
+          <div class="tier-desc">Simplified scorecard view for operational managers. KPI summary for your BU only — no individual data, no benchmarking, no AI recommendations.</div>
+          <ul class="tier-features">
+            <li><i class="fa-solid fa-check"></i> KPI scorecard (BU level)</li>
+            <li><i class="fa-solid fa-check"></i> Color-coded status indicators</li>
+            <li><i class="fa-regular fa-circle-xmark" style="color:#555;"></i> BU comparison</li>
+            <li><i class="fa-regular fa-circle-xmark" style="color:#555;"></i> AI recommendations</li>
+            <li><i class="fa-regular fa-circle-xmark" style="color:#555;"></i> Trend projections</li>
+            <li><i class="fa-regular fa-circle-xmark" style="color:#555;"></i> V_HC composite index</li>
+          </ul>
+          <a href="pilot-bu-dashboard.html?tier=3" class="tier-btn" onclick="sessionStorage.setItem('hcv_tier','3')">
+            <i class="fa-solid fa-user-tie"></i> Ouvrir en Tier 3
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <hr class="section-divider" />
+
+  <!-- ═══════════════════════════════════ FOOTER ═══════════════════════════════ -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-top">
+
+        <div class="footer-brand">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+            <div class="logo-mark">CA<br>CEIS</div>
+            <span class="logo-text">CACEIS</span>
+          </div>
+          <p>Human Capital Valuation — a data-native framework developed during the AlbertSchool Hackathon, April 2025. Built for CACEIS leadership.</p>
+        </div>
+
+        <div class="footer-links">
+          <div class="footer-col">
+            <h4>Project</h4>
+            <a href="#hero">Overview</a>
+            <a href="#value-props">Framework</a>
+            <a href="#methodology">Methodology</a>
+            <a href="#access-tiers">Access Tiers</a>
+          </div>
+          <div class="footer-col">
+            <h4>Resources</h4>
+            <a href="#" onclick="showToast('GitHub repository coming soon'); return false;"><i class="fa-brands fa-github" style="margin-right:6px;"></i>GitHub</a>
+            <a href="#" onclick="showToast('Documentation PDF opening...'); return false;"><i class="fa-solid fa-file-pdf" style="margin-right:6px;"></i>Technical Docs</a>
+            <a href="#" onclick="showToast('Dataset catalogue coming soon'); return false;"><i class="fa-solid fa-database" style="margin-right:6px;"></i>Data Catalogue</a>
+          </div>
+          <div class="footer-col">
+            <h4>Legal</h4>
+            <a href="#" onclick="showToast('Privacy policy: all data processed in-perimeter per GDPR'); return false;">Privacy Policy</a>
+            <a href="#" onclick="showToast('Data usage agreement available on request'); return false;">Data Usage</a>
+            <a href="#" onclick="showToast('Contact: rkryslak@albertschool.com'); return false;">Contact</a>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="footer-bottom">
+        <div class="footer-copy">
+          © 2025 CACEIS · AlbertSchool Hackathon · Deliverable 2 · April 30, 2025
+        </div>
+        <div class="footer-badges">
+          <span class="badge"><i class="fa-solid fa-shield-halved" style="margin-right:5px;color:#5cd9c0;"></i>GDPR Compliant</span>
+          <span class="badge"><i class="fa-solid fa-flag" style="margin-right:5px;color:#a8a0ff;"></i>Sovereign AI</span>
+          <span class="badge"><i class="fa-solid fa-lock" style="margin-right:5px;color:#f0b545;"></i>Internal Use Only</span>
+        </div>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- ─── Toast ────────────────────────────────────────────────────────────── -->
+  <div id="toast" role="alert" aria-live="polite">
+    <i class="fa-solid fa-circle-check"></i>
+    <span id="toast-msg">Action completed</span>
+  </div>
+
+  <!-- ═══════════════════════════════════ JS ═══════════════════════════════════ -->
+  <script>
+    /* ─── Navbar scroll effect ──────────────────────────────────────────────── */
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      navbar.style.background = window.scrollY > 20
+        ? 'rgba(9,9,16,0.95)'
+        : 'rgba(13,13,20,0.82)';
+    }, { passive: true });
+
+    /* ─── Active nav link ───────────────────────────────────────────────────── */
+    const sections = document.querySelectorAll('section[id], div[id]');
+    const navLinks = document.querySelectorAll('.nav-links a');
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          navLinks.forEach(l => l.classList.remove('active'));
+          const match = document.querySelector(`.nav-links a[href="#${entry.target.id}"]`);
+          if (match) match.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-40% 0px -55% 0px' });
+    sections.forEach(s => observer.observe(s));
+
+    /* ─── Scroll reveal ─────────────────────────────────────────────────────── */
+    const revealObs = new IntersectionObserver(entries => {
+      entries.forEach((e, i) => {
+        if (e.isIntersecting) {
+          setTimeout(() => e.target.classList.add('visible'), i * 80);
+          revealObs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+    /* ─── Counter animation ─────────────────────────────────────────────────── */
+    function animateCounter(el, target, duration = 1600) {
+      const start = performance.now();
+      const update = (now) => {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.round(eased * target).toLocaleString();
+        if (progress < 1) requestAnimationFrame(update);
+        else el.textContent = target.toLocaleString();
+      };
+      requestAnimationFrame(update);
+    }
+
+    const counterObs = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.querySelectorAll('[data-target]').forEach(el => {
+            animateCounter(el, parseInt(el.dataset.target, 10));
+          });
+          counterObs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.3 });
+    document.querySelectorAll('.stats-band').forEach(el => counterObs.observe(el));
+
+    /* ─── Toast ─────────────────────────────────────────────────────────────── */
+    let toastTimer;
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 3200);
+    }
+
+    /* ─── Mobile nav ────────────────────────────────────────────────────────── */
+    function toggleMobileMenu() {
+      const nav = document.getElementById('mobile-nav');
+      const icon = document.getElementById('hamburger-icon');
+      const open = nav.style.display === 'flex';
+      nav.style.display = open ? 'none' : 'flex';
+      icon.className = open ? 'fa-solid fa-bars' : 'fa-solid fa-xmark';
+      document.body.style.overflow = open ? '' : 'hidden';
+    }
+    function closeMobile() {
+      const nav = document.getElementById('mobile-nav');
+      nav.style.display = 'none';
+      document.getElementById('hamburger-icon').className = 'fa-solid fa-bars';
+      document.body.style.overflow = '';
+    }
+
+    /* ─── Keyboard accessibility for dropdown ────────────────────────────────── */
+    document.querySelectorAll('.nav-dropdown > button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const expanded = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!expanded));
+      });
+    });
+  </script>
+
+  <!-- ─── Hero KPI values from JSON ─────────────────────────────────────── -->
+  <script>
+    (async function() {
+      function applyKpi(data) {
+        const gs  = data.group_summary;
+        const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+        set('hero-kpi-Y', `Y = ${gs.Y_caceis_2024.toFixed(2)}`);
+        set('hero-kpi-L', `λ = ${Math.round(gs.lambda_caceis_2024)}h`);
+        set('hero-kpi-B', `β = ${gs.beta_qr_caceis_2024.toFixed(2)}`);
+        const cagr = gs.P_cagr_2022_2025;
+        set('hero-kpi-P', `P = ${cagr >= 0 ? '+' : ''}${(cagr * 100).toFixed(2)}%`);
+      }
+      const paths = ['./data/kpi-output.json', '../rag/data/kpi-output.json', 'http://localhost:8000/kpi-data'];
+      for (const path of paths) {
+        try { const r = await fetch(path); if (r.ok) { applyKpi(await r.json()); return; } } catch(e) {}
+      }
+    })();
+  </script>
+</body>
+</html>

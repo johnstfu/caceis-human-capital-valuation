@@ -1,0 +1,40 @@
+# ── Confidential source data ──────────────────────────────────────────────────
+Sujet Alberthon/
+*.xlsx
+*.xls
+*.csv
+
+# ── Environment & secrets ─────────────────────────────────────────────────────
+.env
+.env.local
+.env.production
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+venv/
+.venv/
+*.ipynb_checkpoints/
+
+# ── ChromaDB (regenerable via ingest_all.py) ──────────────────────────────────
+rag/data/chroma_db/
+rag/data/embeddings_cache.json
+rag/data/extraction_raw.json
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.code-workspace
+
+# ── Build artifacts ───────────────────────────────────────────────────────────
+dist/
+build/
+*.egg

@@ -1,0 +1,3826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pilot Dashboard — Finance & Admin · CACEIS</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    /* ─── Reset & Tokens ────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple:      #3C3489;
+      --teal:        #085041;
+      --amber:       #BA7517;
+      --blue:        #0C447C;
+      --coral:       #9B3030;
+      --purple-l:    #a8a0ff;
+      --teal-l:      #5cd9c0;
+      --amber-l:     #f0b545;
+      --blue-l:      #6ab0f5;
+      --coral-l:     #f08080;
+      --green:       #2e7d52;
+      --green-l:     #56d487;
+      --red-l:       #f07070;
+
+      --bg:          #0d0d14;
+      --bg-card:     #13131f;
+      --bg-glass:    rgba(255,255,255,0.04);
+      --border:      rgba(255,255,255,0.08);
+      --text:        #e8e8f0;
+      --muted:       #8888a8;
+      --white:       #ffffff;
+
+      --r:           14px;
+      --r-lg:        20px;
+      --shadow:      0 8px 32px rgba(0,0,0,0.45);
+      --t:           0.22s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.6;
+      overflow-x: hidden; min-height: 100vh;
+    }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--purple); border-radius: 3px; }
+
+    /* ─── Layout ────────────────────────────────────────────────── */
+    .page { display: flex; min-height: 100vh; }
+
+    /* ─── Sidebar ───────────────────────────────────────────────── */
+    .sidebar {
+      width: 240px; flex-shrink: 0;
+      background: #0a0a13; border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+      overflow-y: auto;
+      transition: transform var(--t);
+    }
+    .sidebar-logo {
+      display: flex; align-items: center; gap: 10px;
+      padding: 20px 20px 16px; border-bottom: 1px solid var(--border);
+      text-decoration: none; color: var(--white);
+    }
+    .logo-mark {
+      width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--purple) 0%, var(--blue) 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 800; color: #fff; text-align: center; line-height: 1.1;
+    }
+    .logo-name { font-size: 14px; font-weight: 700; }
+    .logo-sub  { font-size: 10px; color: var(--muted); display: block; }
+
+    .sidebar-section {
+      padding: 18px 12px 8px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--muted);
+    }
+    .sidebar-link {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 14px; border-radius: 9px; margin: 2px 8px;
+      font-size: 13px; font-weight: 500; color: var(--muted);
+      text-decoration: none; cursor: pointer;
+      transition: color var(--t), background var(--t);
+    }
+    .sidebar-link i { width: 16px; font-size: 13px; }
+    .sidebar-link:hover { color: var(--white); background: var(--bg-glass); }
+    .sidebar-link.active { color: var(--white); background: rgba(60,52,137,0.25); }
+    .sidebar-link.active i { color: var(--purple-l); }
+
+    .sidebar-footer {
+      margin-top: auto; padding: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 11px; color: var(--muted); line-height: 1.5;
+    }
+    .sidebar-footer a { color: var(--muted); text-decoration: none; }
+    .sidebar-footer a:hover { color: var(--white); }
+
+    /* ─── Main ──────────────────────────────────────────────────── */
+    .main { margin-left: 240px; flex: 1; min-width: 0; }
+
+    /* ─── Topbar ────────────────────────────────────────────────── */
+    .topbar {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(10,10,19,0.9); backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 60px;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 14px; }
+    .topbar-title { font-size: 15px; font-weight: 700; color: var(--white); }
+    .topbar-date { font-size: 12px; color: var(--muted); }
+
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+    /* Tier toggle */
+    .tier-toggle {
+      display: flex; align-items: center;
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+      padding: 3px; gap: 2px;
+    }
+    .tier-btn {
+      padding: 5px 12px; border-radius: 7px; border: none; cursor: pointer;
+      font-size: 12px; font-weight: 600; background: transparent; color: var(--muted);
+      transition: background var(--t), color var(--t);
+    }
+    .tier-btn.active { background: var(--purple); color: var(--white); }
+
+    .topbar-actions { display: flex; align-items: center; gap: 8px; }
+    .icon-btn {
+      width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--bg-glass); color: var(--muted);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 13px;
+      transition: color var(--t), background var(--t);
+    }
+    .icon-btn:hover { color: var(--white); background: rgba(255,255,255,0.07); }
+
+    .hamburger-btn {
+      display: none; background: none; border: none;
+      color: var(--text); font-size: 18px; cursor: pointer; padding: 4px;
+    }
+
+    /* ─── Content ───────────────────────────────────────────────── */
+    .content { padding: 28px; }
+
+    /* ─── BU Header ─────────────────────────────────────────────── */
+    .bu-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      flex-wrap: wrap; gap: 20px; margin-bottom: 28px;
+    }
+    .bu-badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 4px 12px; border-radius: 999px;
+      background: rgba(60,52,137,0.2); border: 1px solid rgba(60,52,137,0.4);
+      font-size: 11px; font-weight: 600; color: var(--purple-l); letter-spacing: 0.06em;
+      text-transform: uppercase; margin-bottom: 10px;
+    }
+    .bu-badge span { width: 6px; height: 6px; border-radius: 50%; background: var(--purple-l); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+
+    .bu-title { font-size: clamp(22px,3vw,32px); font-weight: 800; letter-spacing: -0.02em; color: var(--white); line-height: 1.2; }
+    .bu-sub { font-size: 14px; color: var(--muted); margin-top: 6px; }
+
+    .bu-meta { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+    .meta-chip {
+      display: flex; align-items: center; gap: 7px;
+      padding: 7px 14px; border-radius: 10px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      font-size: 12px; color: var(--muted);
+    }
+    .meta-chip i { font-size: 12px; color: var(--purple-l); }
+    .meta-chip strong { color: var(--white); }
+
+    /* ─── Section labels ─────────────────────────────────────────── */
+    .section-head { margin-bottom: 16px; }
+    .section-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted); display: block; margin-bottom: 4px;
+    }
+    .section-title { font-size: 18px; font-weight: 700; color: var(--white); }
+
+    /* ─── KPI Cards ──────────────────────────────────────────────── */
+    .kpi-grid {
+      display: grid; grid-template-columns: repeat(5,1fr); gap: 14px;
+      margin-bottom: 28px;
+    }
+    .kpi-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 20px 18px;
+      position: relative; overflow: hidden;
+      transition: transform var(--t), border-color var(--t), box-shadow var(--t);
+      cursor: default;
+    }
+    .kpi-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      border-radius: var(--r-lg) var(--r-lg) 0 0;
+    }
+    .kpi-card.kpi-y::before  { background: var(--purple-l); }
+    .kpi-card.kpi-l::before  { background: var(--teal-l); }
+    .kpi-card.kpi-b::before  { background: var(--amber-l); }
+    .kpi-card.kpi-p::before  { background: var(--blue-l); }
+    .kpi-card.kpi-r::before  { background: var(--coral-l); }
+    .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 16px 48px rgba(0,0,0,.4); border-color: rgba(255,255,255,.14); }
+
+    .kpi-greek {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+    .kpi-card.kpi-y .kpi-greek { color: var(--purple-l); }
+    .kpi-card.kpi-l .kpi-greek { color: var(--teal-l); }
+    .kpi-card.kpi-b .kpi-greek { color: var(--amber-l); }
+    .kpi-card.kpi-p .kpi-greek { color: var(--blue-l); }
+    .kpi-card.kpi-r .kpi-greek { color: var(--coral-l); }
+
+    .kpi-name { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+    .kpi-value { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; color: var(--white); line-height: 1; }
+    .kpi-unit  { font-size: 12px; font-weight: 500; color: var(--muted); margin-left: 3px; }
+    .kpi-vs {
+      display: flex; align-items: center; gap: 5px;
+      margin-top: 8px; font-size: 11.5px;
+    }
+    .kpi-vs .label { color: var(--muted); }
+    .kpi-vs .diff  { font-weight: 700; display: flex; align-items: center; gap: 3px; }
+    .diff.up   { color: var(--green-l); }
+    .diff.down { color: var(--red-l); }
+    .diff.neutral { color: var(--amber-l); }
+
+    /* Confidence bar */
+    .conf-wrap { margin-top: 12px; }
+    .conf-label { font-size: 10px; color: var(--muted); margin-bottom: 4px; display: flex; justify-content: space-between; }
+    .conf-track {
+      height: 4px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden;
+    }
+    .conf-fill { height: 100%; border-radius: 2px; transition: width 1s ease; }
+    .kpi-card.kpi-y .conf-fill { background: var(--purple-l); }
+    .kpi-card.kpi-l .conf-fill { background: var(--teal-l); }
+    .kpi-card.kpi-b .conf-fill { background: var(--amber-l); }
+    .kpi-card.kpi-p .conf-fill { background: var(--blue-l); }
+    .kpi-card.kpi-r .conf-fill { background: var(--coral-l); }
+
+    /* ─── Tier Selector Widget ──────────────────────────────── */
+    .tier-selector {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 18px 20px; margin-bottom: 24px;
+    }
+    .ts-header {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 14px;
+    }
+    .ts-header-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); display: flex; align-items: center; gap: 7px;
+    }
+    .ts-current-badge {
+      margin-left: auto; padding: 4px 12px; border-radius: 999px;
+      font-size: 11.5px; font-weight: 600;
+      border: 1px solid; letter-spacing: 0; text-transform: none;
+      transition: background var(--t), color var(--t), border-color var(--t);
+    }
+    .ts-current-badge.b1 { background: rgba(60,52,137,0.2); border-color: rgba(60,52,137,0.45); color: var(--purple-l); }
+    .ts-current-badge.b2 { background: rgba(8,80,65,0.2);   border-color: rgba(8,80,65,0.45);   color: var(--teal-l); }
+    .ts-current-badge.b3 { background: rgba(12,68,124,0.2); border-color: rgba(12,68,124,0.45); color: var(--blue-l); }
+
+    .ts-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+
+    .tier-select-card {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 14px; border-radius: var(--r);
+      background: var(--bg-glass); border: 1px solid var(--border);
+      cursor: pointer; text-align: left; width: 100%;
+      transition: border-color var(--t), background var(--t), transform var(--t);
+      color: var(--text);
+    }
+    .tier-select-card:hover { border-color: rgba(255,255,255,.15); background: rgba(255,255,255,0.05); transform: translateY(-2px); }
+    .tier-select-card.ts-active { border-color: rgba(60,52,137,0.6); background: rgba(60,52,137,0.1); }
+    .tier-select-card[data-tier="2"].ts-active { border-color: rgba(8,80,65,0.6);   background: rgba(8,80,65,0.1); }
+    .tier-select-card[data-tier="3"].ts-active { border-color: rgba(12,68,124,0.6); background: rgba(12,68,124,0.1); }
+
+    .ts-icon {
+      width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+    .tier-select-card[data-tier="1"] .ts-icon { background: rgba(60,52,137,0.3); color: var(--purple-l); }
+    .tier-select-card[data-tier="2"] .ts-icon { background: rgba(8,80,65,0.3);   color: var(--teal-l); }
+    .tier-select-card[data-tier="3"] .ts-icon { background: rgba(12,68,124,0.3); color: var(--blue-l); }
+
+    .ts-info { flex: 1; min-width: 0; }
+    .ts-tier-num  { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    .ts-role  { font-size: 13px; font-weight: 700; color: var(--white); margin: 2px 0 4px; }
+    .ts-perms { font-size: 10.5px; color: var(--muted); line-height: 1.5; }
+    .ts-perm-tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 7px; border-radius: 999px; font-size: 10px; font-weight: 600;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border); margin: 2px 2px 0 0;
+      color: var(--muted); white-space: nowrap;
+    }
+    .ts-perm-tag.on  { color: var(--green-l); border-color: rgba(86,212,135,0.2); background: rgba(86,212,135,0.07); }
+    .ts-perm-tag.off { color: var(--red-l);   border-color: rgba(240,112,112,0.2); background: rgba(240,112,112,0.07); }
+    .ts-check { font-size: 15px; color: var(--muted); flex-shrink: 0; margin-top: 2px; }
+    .tier-select-card.ts-active .ts-check { color: var(--purple-l); }
+    .tier-select-card[data-tier="2"].ts-active .ts-check { color: var(--teal-l); }
+    .tier-select-card[data-tier="3"].ts-active .ts-check { color: var(--blue-l); }
+
+    /* access summary bar */
+    .ts-access-bar {
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+      padding: 10px 14px; border-radius: 10px; margin-top: 12px;
+      font-size: 12px; font-weight: 500; transition: background var(--t), color var(--t);
+    }
+    .ts-access-bar.b1 { background: rgba(60,52,137,0.1); border: 1px solid rgba(60,52,137,0.25); color: var(--purple-l); }
+    .ts-access-bar.b2 { background: rgba(8,80,65,0.1);   border: 1px solid rgba(8,80,65,0.25);   color: var(--teal-l); }
+    .ts-access-bar.b3 { background: rgba(12,68,124,0.1); border: 1px solid rgba(12,68,124,0.25); color: var(--blue-l); }
+    .ts-access-bar i { margin-right: 6px; }
+    .ts-access-items { display: flex; flex-wrap: wrap; gap: 6px; }
+    .ts-access-item {
+      padding: 2px 9px; border-radius: 999px; font-size: 10.5px; font-weight: 600;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .ts-access-item.on  { background: rgba(86,212,135,0.1);  color: var(--green-l);  border: 1px solid rgba(86,212,135,0.2); }
+    .ts-access-item.off { background: rgba(240,112,112,0.08); color: #c06060; border: 1px solid rgba(240,112,112,0.15); }
+
+    /* ─── Lever detail / summary ─────────────────────────── */
+    .lever-summary-text {
+      font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 10px;
+      padding: 10px 12px; background: rgba(255,255,255,0.03); border-radius: 8px;
+      border-left: 2px solid rgba(255,255,255,0.1);
+    }
+
+    /* ─── Tier visibility (JS-controlled, transitions only) ─ */
+    .tier2-only, .tier3-only { transition: opacity .3s; } /* classes kept for compat, JS drives display */
+
+    @media (max-width: 680px) { .ts-cards { grid-template-columns: 1fr; } }
+
+    /* ─── Two-col layout ─────────────────────────────────────────── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+    .three-col { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 28px; }
+
+    /* ─── Panel ──────────────────────────────────────────────────── */
+    .panel {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 22px 22px 20px;
+      position: relative; overflow: hidden;
+    }
+    .panel-title {
+      font-size: 13px; font-weight: 700; color: var(--white); margin-bottom: 18px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .panel-title .subtitle { font-size: 11px; font-weight: 500; color: var(--muted); }
+    .panel-badge {
+      padding: 3px 9px; border-radius: 999px;
+      font-size: 10px; font-weight: 600; letter-spacing: 0.05em;
+      background: rgba(255,255,255,0.06); color: var(--muted);
+    }
+
+    /* ─── Comparison bars ────────────────────────────────────────── */
+    .bar-list { display: flex; flex-direction: column; gap: 16px; }
+    .bar-item {}
+    .bar-meta {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 6px;
+    }
+    .bar-label { font-size: 12.5px; color: var(--text); font-weight: 500; }
+    .bar-val   { font-size: 12px; font-weight: 700; }
+    .bar-track {
+      height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden;
+      position: relative;
+    }
+    .bar-fill {
+      height: 100%; border-radius: 4px;
+      transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+      position: relative;
+    }
+    .bar-fill::after {
+      content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 20px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25));
+    }
+    .bar-fill.green  { background: linear-gradient(90deg, #2e7d52, var(--green-l)); }
+    .bar-fill.amber  { background: linear-gradient(90deg, #7a5010, var(--amber-l)); }
+    .bar-fill.red    { background: linear-gradient(90deg, #6b2020, var(--red-l)); }
+    .bar-fill.purple { background: linear-gradient(90deg, var(--purple), var(--purple-l)); }
+    .bar-fill.grey   { background: linear-gradient(90deg, #2a2a3a, #6666aa); }
+
+    /* Marker for "this BU" */
+    .bar-you { font-size: 10px; color: var(--purple-l); font-weight: 700; }
+
+    /* ─── Levers ──────────────────────────────────────────────────── */
+    .lever-list { display: flex; flex-direction: column; gap: 14px; }
+    .lever {
+      background: var(--bg-glass); border: 1px solid var(--border); border-radius: var(--r);
+      padding: 18px; position: relative; overflow: hidden;
+      transition: border-color var(--t), transform var(--t);
+      cursor: default;
+    }
+    .lever:hover { border-color: rgba(255,255,255,.14); transform: translateX(3px); }
+    .lever::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    }
+    .lever:nth-child(1)::before { background: var(--purple-l); }
+    .lever:nth-child(2)::before { background: var(--teal-l); }
+    .lever:nth-child(3)::before { background: var(--amber-l); }
+
+    .lever-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .lever-num  { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    .lever-impact {
+      padding: 2px 9px; border-radius: 999px; font-size: 10px; font-weight: 700;
+      background: rgba(86,212,135,0.12); color: var(--green-l); border: 1px solid rgba(86,212,135,0.2);
+    }
+    .lever-title { font-size: 14px; font-weight: 700; color: var(--white); margin-bottom: 6px; }
+    .lever-desc  { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 10px; }
+    .lever-source {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--muted);
+    }
+    .lever-source i { font-size: 10px; }
+    .lever-source span { font-style: italic; }
+
+    /* ─── Chart container ────────────────────────────────────────── */
+    .chart-wrap { position: relative; height: 220px; }
+    .chart-wrap-tall { position: relative; height: 280px; }
+
+    /* ─── Insight pills ──────────────────────────────────────────── */
+    .insight-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .insight-pill {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 999px;
+      font-size: 11.5px; font-weight: 500;
+      background: var(--bg-glass); border: 1px solid var(--border); color: var(--muted);
+    }
+    .insight-pill i { font-size: 10px; }
+    .insight-pill.warn  { border-color: rgba(240,181,69,.25); color: var(--amber-l); }
+    .insight-pill.good  { border-color: rgba(86,212,135,.25); color: var(--green-l); }
+    .insight-pill.alert { border-color: rgba(240,112,112,.25); color: var(--red-l); }
+
+    /* ─── Data table ─────────────────────────────────────────────── */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .data-table th {
+      padding: 8px 12px; text-align: left;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); border-bottom: 1px solid var(--border);
+    }
+    .data-table td {
+      padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.04);
+      color: var(--text); vertical-align: middle;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .tbl-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      display: inline-block; margin-right: 7px;
+    }
+    .tbl-you { font-size: 10px; font-weight: 700; color: var(--purple-l); background: rgba(60,52,137,0.2); padding: 2px 7px; border-radius: 999px; }
+
+    /* ─── Alert banner ───────────────────────────────────────────── */
+    .alert-banner {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 14px 18px; border-radius: var(--r); margin-bottom: 20px;
+      font-size: 13px;
+    }
+    .alert-banner.warn  { background: rgba(186,117,23,.1); border: 1px solid rgba(186,117,23,.3); color: var(--amber-l); }
+    .alert-banner.info  { background: rgba(60,52,137,.1); border: 1px solid rgba(60,52,137,.35); color: var(--purple-l); }
+    .alert-banner i { margin-top: 1px; flex-shrink: 0; }
+    .alert-banner p { margin: 0; line-height: 1.5; }
+    .alert-banner strong { color: inherit; }
+
+    /* ─── Toast ──────────────────────────────────────────────────── */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      background: #1e1e30; border: 1px solid var(--border);
+      border-radius: var(--r); padding: 12px 18px;
+      font-size: 13px; color: var(--text);
+      display: flex; align-items: center; gap: 10px;
+      box-shadow: var(--shadow);
+      transform: translateY(12px); opacity: 0;
+      transition: transform .3s ease, opacity .3s ease; pointer-events: none;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast i { color: var(--teal-l); }
+
+    /* ─── Responsive ──────────────────────────────────────────────── */
+    @media (max-width: 1100px) {
+      .kpi-grid { grid-template-columns: repeat(3,1fr); }
+    }
+    @media (max-width: 900px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .hamburger-btn { display: block; }
+      .two-col, .three-col { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: repeat(2,1fr); }
+    }
+    @media (max-width: 500px) {
+      .kpi-grid { grid-template-columns: 1fr; }
+      .content { padding: 16px; }
+    }
+
+    /* ─── Reveal ─────────────────────────────────────────────────── */
+    .reveal { opacity: 0; transform: translateY(16px); transition: opacity .5s ease, transform .5s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ─── Action Levers — RAG Integration ──────────────────────── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .btn-generate-levers {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: linear-gradient(135deg, var(--purple), var(--blue));
+      color: #fff; border: none; border-radius: 10px;
+      padding: 9px 18px; font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: inherit; white-space: nowrap;
+      transition: opacity 0.2s, transform 0.15s;
+      box-shadow: 0 4px 16px rgba(60,52,137,0.4);
+    }
+    .btn-generate-levers:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-generate-levers:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+    /* KPI badge on action card */
+    .lever-kpi-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 20px; height: 20px; border-radius: 5px;
+      font-size: 10px; font-weight: 800;
+      vertical-align: middle; margin-right: 3px;
+    }
+    .lever-kpi-Y      { background: rgba(168,160,255,0.25); color: var(--purple-l); }
+    .lever-kpi-\3BB   { background: rgba(92,217,192,0.25);  color: var(--teal-l); }
+    .lever-kpi-\3B2   { background: rgba(240,181,69,0.25);  color: var(--amber-l); }
+    .lever-kpi-\3C1   { background: rgba(240,112,112,0.25); color: var(--coral-l); }
+    .lever-kpi-career { background: rgba(168,160,255,0.15); color: var(--purple-l); }
+
+    /* Action ID chip */
+    .act-id-chip {
+      display: inline-flex; align-items: center;
+      padding: 2px 8px; border-radius: 5px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+      background: rgba(106,176,245,0.12); color: var(--blue-l);
+      border: 1px solid rgba(106,176,245,0.2);
+    }
+    .act-incomplete-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 5px;
+      font-size: 10px; font-weight: 600;
+      background: rgba(240,181,69,0.12); color: var(--amber-l);
+      border: 1px solid rgba(240,181,69,0.2);
+    }
+
+    /* Validate / Reject buttons — T1 only via CSS */
+    .lever-actions-btns {
+      display: none; align-items: center; gap: 6px; margin-top: 12px;
+    }
+    body[data-tier="1"] .lever-actions-btns { display: flex; }
+    .btn-validate {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 5px 12px; border-radius: 7px; cursor: pointer;
+      font-size: 11px; font-weight: 600; font-family: inherit;
+      background: rgba(86,212,135,0.12); color: var(--green-l);
+      border: 1px solid rgba(86,212,135,0.22);
+      transition: background 0.18s;
+    }
+    .btn-validate:hover { background: rgba(86,212,135,0.25); }
+    .btn-reject {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 5px 12px; border-radius: 7px; cursor: pointer;
+      font-size: 11px; font-weight: 600; font-family: inherit;
+      background: rgba(240,112,112,0.08); color: var(--coral-l);
+      border: 1px solid rgba(240,112,112,0.18);
+      transition: background 0.18s;
+    }
+    .btn-reject:hover { background: rgba(240,112,112,0.18); }
+    .lever.lever-validated { border-color: rgba(86,212,135,0.3) !important; background: rgba(86,212,135,0.04); }
+    .lever.lever-validated::before { background: var(--green-l) !important; }
+    .lever.lever-rejected { opacity: 0.38; pointer-events: none; }
+
+    /* Rank badges */
+    .lever-rank-badge {
+      display: inline-flex; align-items: center;
+      padding: 2px 10px; border-radius: 999px;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .lever-rank-badge.rank-1 {
+      background: rgba(240,112,112,0.15); color: var(--coral-l);
+      border: 1px solid rgba(240,112,112,0.3);
+    }
+    .lever-rank-badge.rank-2 {
+      background: rgba(240,181,69,0.15); color: var(--amber-l);
+      border: 1px solid rgba(240,181,69,0.3);
+    }
+    .lever-rank-badge.rank-3 {
+      background: rgba(180,178,169,0.12); color: var(--muted);
+      border: 1px solid rgba(180,178,169,0.2);
+    }
+
+    /* Timing line */
+    .lever-timing {
+      font-size: 11px; color: var(--muted);
+      margin-top: 4px; display: flex; align-items: center; gap: 5px;
+    }
+
+    /* Special banners */
+    .levers-gap-note {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 10px 14px; border-radius: 8px; margin-top: 8px;
+      font-size: 12px; line-height: 1.5;
+      background: rgba(240,181,69,0.07); border: 1px solid rgba(240,181,69,0.2);
+      color: var(--amber-l);
+    }
+    .levers-career-banner, .levers-p-banner {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 16px; border-radius: 10px; margin-bottom: 16px;
+      font-size: 13px; line-height: 1.55;
+    }
+    .levers-career-banner { background: rgba(168,160,255,0.07); border: 1px solid rgba(168,160,255,0.22); color: var(--purple-l); }
+    .levers-p-banner      { background: rgba(106,176,245,0.07); border: 1px solid rgba(106,176,245,0.20); color: var(--blue-l); }
+
+    /* Sub-section label inside levers */
+    .levers-sub-label {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted);
+      margin: 22px 0 12px; padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ─── Suivi ─────────────────────────────────────────────────── */
+    .suivi-empty {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 52px 20px; color: var(--muted); text-align: center;
+      border: 1px dashed var(--border); border-radius: var(--r-lg);
+    }
+    .suivi-empty i { font-size: 28px; opacity: 0.35; margin-bottom: 14px; }
+    .suivi-empty p { font-size: 13px; line-height: 1.6; max-width: 360px; }
+    .suivi-empty small { font-size: 11px; opacity: 0.6; margin-top: 6px; display: block; }
+
+    .suivi-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .suivi-table th {
+      padding: 9px 14px; text-align: left;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase;
+      color: var(--muted); border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+    }
+    .suivi-table td { padding: 11px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+    .suivi-table tr:last-child td { border-bottom: none; }
+    .suivi-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .suivi-status-select {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 7px;
+      color: var(--text); font-size: 11px; font-weight: 600; font-family: inherit;
+      padding: 4px 8px; cursor: pointer; outline: none;
+      transition: border-color var(--t);
+    }
+    .suivi-status-select:focus { border-color: rgba(168,160,255,0.5); }
+    .suivi-status-select.in-progress { border-color: rgba(240,181,69,0.5); color: var(--amber-l); }
+    .suivi-status-select.done { border-color: rgba(86,212,135,0.5); color: var(--green-l); }
+
+    .suivi-remove-btn {
+      width: 26px; height: 26px; border-radius: 6px; border: none; cursor: pointer;
+      background: transparent; color: var(--muted); font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background var(--t), color var(--t);
+    }
+    .suivi-remove-btn:hover { background: rgba(240,112,112,0.12); color: var(--coral-l); }
+
+    .suivi-coming-soon {
+      margin-top: 24px; padding: 14px 18px; border-radius: var(--r);
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px;
+      font-size: 12px; color: var(--muted);
+    }
+    .suivi-coming-soon i { color: var(--purple-l); font-size: 14px; flex-shrink: 0; }
+    .suivi-coming-soon strong { color: var(--text); }
+
+    /* ─── Jalons ────────────────────────────────────────────────── */
+    .jalons-container {
+      padding: 8px 12px 10px; background: rgba(255,255,255,0.02);
+      border-top: 1px solid rgba(255,255,255,0.04);
+    }
+    .jalons-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
+    }
+    .jalon-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 0; font-size: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .jalon-row:last-child { border-bottom: none; }
+    .jalon-row.jalon-late .jalon-date { color: var(--coral-l); }
+    .jalon-check {
+      width: 14px; height: 14px; accent-color: var(--purple-l);
+      cursor: pointer; flex-shrink: 0;
+    }
+    .jalon-label { flex: 1; color: var(--text); font-weight: 500; }
+    .jalon-date  { color: var(--muted); font-size: 11px; white-space: nowrap; }
+    .jalon-badge-late {
+      padding: 1px 7px; border-radius: 999px;
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      background: rgba(240,112,112,0.15); color: var(--coral-l);
+      border: 1px solid rgba(240,112,112,0.3);
+    }
+    .jalon-badge-done { color: var(--green-l); font-size: 11px; font-weight: 700; }
+
+    /* ─── Lexique / Documentation ───────────────────────────────── */
+    .lex-accordion { display: flex; flex-direction: column; gap: 8px; }
+    .lex-item {
+      background: rgba(255,255,255,0.025); border: 1px solid var(--border);
+      border-radius: var(--r); overflow: hidden;
+    }
+    .lex-trigger {
+      width: 100%; display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px; background: none; border: none; cursor: pointer;
+      font-size: 13px; font-weight: 600; color: var(--text);
+      font-family: inherit; text-align: left;
+      transition: background var(--t);
+    }
+    .lex-trigger:hover { background: rgba(255,255,255,0.04); }
+    .lex-chevron {
+      color: var(--muted); font-size: 11px;
+      transition: transform 0.2s ease; flex-shrink: 0;
+    }
+    .lex-item.open .lex-chevron { transform: rotate(90deg); }
+    .lex-body {
+      display: none; padding: 0 18px 18px;
+      font-size: 12.5px; color: var(--muted); line-height: 1.7;
+    }
+    .lex-item.open .lex-body { display: block; }
+    .lex-formula {
+      font-family: 'Courier New', monospace; font-size: 13px;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px 16px; margin: 10px 0;
+      color: var(--white); letter-spacing: 0.02em;
+    }
+    .lex-param-row {
+      display: flex; align-items: baseline; gap: 10px;
+      padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .lex-param-row:last-child { border-bottom: none; }
+    .lex-param-key {
+      min-width: 28px; font-weight: 700; font-size: 13px; font-family: 'Courier New', monospace;
+    }
+    .lex-param-desc { font-size: 12px; color: var(--muted); }
+    .lex-kpi-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 11.5px; }
+    .lex-kpi-table th {
+      text-align: left; padding: 6px 10px; font-size: 10px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    .lex-kpi-table td {
+      padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: top; color: var(--muted);
+    }
+    .lex-kpi-table tr:last-child td { border-bottom: none; }
+    .lex-kpi-table td:first-child { font-weight: 700; font-family: 'Courier New', monospace; color: var(--text); }
+    .lex-glossary-row { padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .lex-glossary-row:last-child { border-bottom: none; }
+    .lex-glossary-term { font-weight: 700; color: var(--text); }
+    .lex-limits { padding-left: 16px; margin: 0; list-style: disc; }
+    .lex-limits li { padding: 3px 0; color: var(--muted); }
+
+    .suivi-progress-bar {
+      height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px;
+      overflow: hidden; margin-top: 6px;
+    }
+    .suivi-progress-fill {
+      height: 100%; border-radius: 2px;
+      background: linear-gradient(90deg, var(--purple), var(--teal-l));
+      transition: width 0.6s ease;
+    }
+
+    /* ─── Overlay ────────────────────────────────────────────────── */
+    #overlay {
+      display: none; position: fixed; inset: 0; z-index: 90;
+      background: rgba(0,0,0,0.55); backdrop-filter: blur(2px);
+    }
+    #overlay.show { display: block; }
+
+    /* ─── Onboarding Tour ───────────────────────────────────────────────── */
+    #tour-backdrop {
+      position: fixed; inset: 0; z-index: 9000;
+      background: transparent; display: none; cursor: default;
+    }
+    #tour-spotlight {
+      position: fixed; z-index: 9001; pointer-events: none; display: none;
+      border-radius: 14px;
+      outline: 2px solid rgba(168,160,255,0.9);
+      box-shadow: 0 0 0 2000px rgba(13,13,20,0.88), 0 0 40px rgba(168,160,255,0.25);
+      transition: top 0.38s cubic-bezier(0.4,0,0.2,1),
+                  left 0.38s cubic-bezier(0.4,0,0.2,1),
+                  width 0.38s cubic-bezier(0.4,0,0.2,1),
+                  height 0.38s cubic-bezier(0.4,0,0.2,1);
+    }
+    #tour-panel {
+      position: fixed; z-index: 9002; display: none;
+      background: #13131f; border: 1px solid rgba(168,160,255,0.3);
+      border-radius: 18px; padding: 26px; width: 320px;
+      box-shadow: 0 28px 80px rgba(0,0,0,0.7);
+      transition: top 0.38s cubic-bezier(0.4,0,0.2,1),
+                  left 0.38s cubic-bezier(0.4,0,0.2,1);
+      pointer-events: all;
+    }
+    #tour-panel.centered {
+      top: 50% !important; left: 50% !important;
+      transform: translate(-50%,-50%);
+      width: 380px;
+    }
+    .tour-tier-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 10px; border-radius: 999px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .tour-tier-badge.tb1 { background: rgba(60,52,137,0.3);  color: var(--purple-l); border: 1px solid rgba(60,52,137,0.5); }
+    .tour-tier-badge.tb2 { background: rgba(8,80,65,0.3);    color: var(--teal-l);   border: 1px solid rgba(8,80,65,0.5); }
+    .tour-tier-badge.tb3 { background: rgba(186,117,23,0.3); color: var(--amber-l);  border: 1px solid rgba(186,117,23,0.5); }
+    #tour-counter {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
+      color: var(--muted); text-transform: uppercase; margin-bottom: 8px;
+    }
+    #tour-title {
+      font-size: 15px; font-weight: 700; color: var(--white);
+      margin-bottom: 10px; line-height: 1.3;
+    }
+    #tour-body {
+      font-size: 13px; color: #aaaacc; line-height: 1.65; margin-bottom: 22px;
+    }
+    .tour-progress {
+      display: flex; gap: 5px; margin-bottom: 18px;
+    }
+    .tour-dot {
+      height: 3px; flex: 1; border-radius: 2px;
+      background: rgba(255,255,255,0.12);
+      transition: background 0.3s;
+    }
+    .tour-dot.done { background: var(--purple-l); }
+    .tour-dot.active { background: var(--teal-l); }
+    .tour-btn-row {
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    #tour-skip {
+      background: none; border: none; color: var(--muted); font-size: 12px;
+      cursor: pointer; padding: 6px 0; font-family: inherit;
+      transition: color 0.2s;
+    }
+    #tour-skip:hover { color: var(--text); }
+    #tour-next-btn {
+      background: linear-gradient(135deg, var(--purple) 0%, var(--blue) 100%);
+      color: #fff; border: none; padding: 10px 22px;
+      border-radius: 9px; font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+      transition: opacity 0.2s, transform 0.15s;
+      box-shadow: 0 4px 16px rgba(60,52,137,0.4);
+    }
+    #tour-next-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    /* Trigger button */
+    .tour-trigger {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(168,160,255,0.12); border: 1px solid rgba(168,160,255,0.25);
+      color: var(--purple-l); border-radius: 8px;
+      padding: 6px 12px; font-size: 12px; font-weight: 600;
+      cursor: pointer; font-family: inherit; white-space: nowrap;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .tour-trigger:hover { background: rgba(168,160,255,0.2); border-color: rgba(168,160,255,0.5); }
+
+    /* ─── Demo button ───────────────────────────────────────────── */
+    #demo-btn {
+      display: none; align-items: center; gap: 6px;
+      background: rgba(60,52,137,0.25); border: 1px solid rgba(168,160,255,0.35);
+      color: var(--purple-l); border-radius: 8px;
+      padding: 6px 12px; font-size: 12px; font-weight: 600;
+      cursor: pointer; font-family: inherit; white-space: nowrap;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    #demo-btn:hover { background: rgba(60,52,137,0.45); border-color: rgba(168,160,255,0.6); }
+
+    #reset-demo-btn {
+      display: none; align-items: center; gap: 6px;
+      padding: 5px 10px; border-radius: 7px;
+      border: 1px solid rgba(240,181,69,0.3);
+      background: rgba(240,181,69,0.08); color: var(--amber-l);
+      font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit;
+      transition: background 0.2s;
+    }
+    #reset-demo-btn:hover { background: rgba(240,181,69,0.18); }
+
+    /* ─── KPI plain-language caption ───────────────────────────── */
+    .kpi-plain-text {
+      font-size: 11px; font-style: italic;
+      color: var(--muted); margin-top: 4px; line-height: 1.4;
+    }
+
+    /* ─── Explain button on KPI cards ──────────────────────────── */
+    .explain-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      margin-top: 10px; padding: 3px 8px; border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: transparent; color: var(--muted);
+      font-size: 10px; font-weight: 600; font-family: inherit;
+      cursor: pointer; opacity: 0.7;
+      transition: opacity 0.18s, background 0.18s, color 0.18s, border-color 0.18s;
+      float: right; clear: both;
+    }
+    .explain-btn:hover { opacity: 1; background: rgba(168,160,255,0.12); color: var(--purple-l); border-color: rgba(168,160,255,0.3); }
+
+    /* ─── RAG mode badge ────────────────────────────────────────── */
+    #rag-mode-badge {
+      display: none; align-items: center; gap: 5px;
+      padding: 3px 9px; border-radius: 999px;
+      font-size: 10px; font-weight: 600;
+      background: rgba(255,255,255,0.06); color: var(--muted);
+      border: 1px solid rgba(255,255,255,0.1);
+      transition: background 0.25s, color 0.25s;
+      margin-top: 4px;
+    }
+    #rag-mode-badge.explain {
+      background: rgba(240,181,69,0.15); color: var(--amber-l);
+      border-color: rgba(240,181,69,0.3);
+    }
+
+    /* ─── RAG Chat Panel ──────────────────────────────────────── */
+    #rag-panel {
+      position: fixed; bottom: 24px; right: 24px; z-index: 8000;
+      width: 420px; max-height: 80vh;
+      background: #13131f; border: 1px solid rgba(168,160,255,0.25);
+      border-radius: 20px; box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+      display: flex; flex-direction: column;
+      transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s;
+    }
+    #rag-panel.hidden { transform: translateY(16px) scale(0.97); opacity: 0; pointer-events: none; }
+    .rag-header {
+      padding: 16px 20px 14px; border-bottom: 1px solid rgba(255,255,255,0.07);
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .rag-header-left { display: flex; align-items: center; gap: 10px; }
+    .rag-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--purple), var(--blue));
+      display: flex; align-items: center; justify-content: center; font-size: 14px;
+    }
+    .rag-title { font-size: 14px; font-weight: 700; color: var(--white); }
+    .rag-subtitle { font-size: 11px; color: var(--muted); }
+    .rag-close {
+      width: 28px; height: 28px; border-radius: 7px; border: none; cursor: pointer;
+      background: rgba(255,255,255,0.05); color: var(--muted); font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s, color 0.2s;
+    }
+    .rag-close:hover { background: rgba(255,255,255,0.1); color: var(--white); }
+    .rag-messages {
+      flex: 1; overflow-y: auto; padding: 16px;
+      display: flex; flex-direction: column; gap: 12px; min-height: 200px;
+    }
+    .rag-messages::-webkit-scrollbar { width: 4px; }
+    .rag-messages::-webkit-scrollbar-thumb { background: var(--purple); border-radius: 2px; }
+    .rag-msg { display: flex; flex-direction: column; gap: 4px; max-width: 94%; }
+    .rag-msg.user { align-self: flex-end; }
+    .rag-msg.assistant { align-self: flex-start; }
+    .rag-bubble {
+      padding: 10px 14px; border-radius: 14px; font-size: 13px; line-height: 1.55;
+    }
+    .rag-msg.user .rag-bubble {
+      background: var(--purple); color: #fff; border-bottom-right-radius: 4px;
+    }
+    .rag-msg.assistant .rag-bubble {
+      background: rgba(255,255,255,0.06); color: var(--text); border-bottom-left-radius: 4px;
+    }
+    .rag-sources {
+      font-size: 10px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px;
+    }
+    .rag-source-tag {
+      background: rgba(168,160,255,0.12); color: var(--purple-l);
+      padding: 2px 7px; border-radius: 4px; font-size: 10px;
+    }
+    .rag-typing {
+      display: flex; gap: 4px; align-items: center; padding: 10px 14px;
+      background: rgba(255,255,255,0.06); border-radius: 14px; border-bottom-left-radius: 4px;
+      width: fit-content;
+    }
+    .rag-typing span {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--purple-l);
+      animation: ragDot 1.2s infinite;
+    }
+    .rag-typing span:nth-child(2) { animation-delay: 0.2s; }
+    .rag-typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes ragDot { 0%,60%,100% { opacity:0.2; transform:scale(0.8); } 30% { opacity:1; transform:scale(1); } }
+    .rag-shortcuts {
+      padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .rag-shortcut {
+      padding: 5px 10px; border-radius: 8px; font-size: 11px; cursor: pointer;
+      background: rgba(255,255,255,0.05); color: var(--muted); border: 1px solid rgba(255,255,255,0.08);
+      transition: all 0.18s; white-space: nowrap;
+    }
+    .rag-shortcut:hover { background: rgba(168,160,255,0.15); color: var(--purple-l); border-color: rgba(168,160,255,0.3); }
+    .rag-input-row {
+      padding: 12px 14px; border-top: 1px solid rgba(255,255,255,0.07);
+      display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0;
+    }
+    #rag-input {
+      flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; padding: 9px 12px; color: var(--text); font-size: 13px;
+      resize: none; max-height: 80px; font-family: inherit; outline: none;
+      transition: border-color 0.2s;
+    }
+    #rag-input:focus { border-color: rgba(168,160,255,0.5); }
+    #rag-input::placeholder { color: var(--muted); }
+    #rag-send {
+      width: 36px; height: 36px; border-radius: 9px; border: none; cursor: pointer;
+      background: var(--purple); color: #fff; font-size: 14px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s; align-self: flex-end;
+    }
+    #rag-send:hover { background: var(--blue); }
+    #rag-send:disabled { opacity: 0.4; cursor: not-allowed; }
+    .rag-fab {
+      position: fixed; bottom: 24px; right: 24px; z-index: 7999;
+      width: 52px; height: 52px; border-radius: 14px; border: none; cursor: pointer;
+      background: linear-gradient(135deg, var(--purple), var(--blue));
+      color: #fff; font-size: 20px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 24px rgba(60,52,137,0.5);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .rag-fab:hover { transform: scale(1.08); box-shadow: 0 12px 32px rgba(60,52,137,0.7); }
+    .rag-fab.open { display: none; }
+    .rag-api-badge {
+      font-size: 10px; padding: 2px 7px; border-radius: 5px;
+      background: rgba(86,208,144,0.15); color: #56d487; margin-left: 6px;
+    }
+    .rag-api-badge.offline { background: rgba(240,112,112,0.15); color: var(--coral-l); }
+
+    /* ─── BU Selector (topbar) ────────────────────────────────── */
+    #bu-selector {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 9px;
+      color: var(--text); font-size: 12px; font-weight: 600; font-family: inherit;
+      padding: 5px 10px; cursor: pointer; outline: none;
+      transition: border-color var(--t);
+      max-width: 200px;
+    }
+    #bu-selector:hover, #bu-selector:focus { border-color: rgba(168,160,255,0.5); }
+    #bu-selector option { background: #13131f; }
+
+    /* ─── Tier Splash ─────────────────────────────────────────── */
+    #tier-splash {
+      position: fixed; inset: 0; z-index: 20000;
+      background: var(--bg);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 40px 20px;
+    }
+    .splash-logo { margin-bottom: 36px; text-align: center; }
+    .splash-logo-mark {
+      width: 52px; height: 52px; border-radius: 12px; margin: 0 auto 16px;
+      background: linear-gradient(135deg, var(--purple) 0%, var(--blue) 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800; color: #fff;
+    }
+    .splash-title { font-size: 26px; font-weight: 800; color: var(--white); margin-bottom: 8px; letter-spacing: -0.02em; }
+    .splash-sub { font-size: 14px; color: var(--muted); }
+    .splash-cards { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; max-width: 920px; }
+    .splash-card {
+      flex: 1; min-width: 240px; max-width: 280px;
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-lg);
+      padding: 28px 24px; cursor: pointer; text-align: left;
+      transition: border-color var(--t), transform var(--t), box-shadow var(--t);
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .splash-card:hover { transform: translateY(-5px); box-shadow: 0 24px 64px rgba(0,0,0,0.55); }
+    .splash-card[data-tier="1"]:hover { border-color: rgba(168,160,255,0.55); }
+    .splash-card[data-tier="2"]:hover { border-color: rgba(92,217,192,0.55); }
+    .splash-card[data-tier="3"]:hover { border-color: rgba(106,176,245,0.55); }
+    .splash-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+    }
+    .splash-card[data-tier="1"] .splash-icon { background: rgba(60,52,137,0.3);  color: var(--purple-l); }
+    .splash-card[data-tier="2"] .splash-icon { background: rgba(8,80,65,0.3);    color: var(--teal-l); }
+    .splash-card[data-tier="3"] .splash-icon { background: rgba(12,68,124,0.3);  color: var(--blue-l); }
+    .splash-tier-num { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+    .splash-role { font-size: 17px; font-weight: 700; color: var(--white); }
+    .splash-desc { font-size: 12px; color: var(--muted); line-height: 1.6; flex: 1; }
+    .splash-arrow { font-size: 16px; align-self: flex-end; margin-top: 4px; }
+    .splash-card[data-tier="1"] .splash-arrow { color: var(--purple-l); }
+    .splash-card[data-tier="2"] .splash-arrow { color: var(--teal-l); }
+    .splash-card[data-tier="3"] .splash-arrow { color: var(--blue-l); }
+    @media (max-width: 680px) { .splash-cards { flex-direction: column; align-items: center; } .splash-card { max-width: 100%; } }
+  </style>
+</head>
+<body data-tier="1">
+
+<!-- ══════════════════════ TIER SPLASH ══════════════════════ -->
+<div id="tier-splash">
+  <div class="splash-logo">
+    <div class="splash-logo-mark">CA<br>CEIS</div>
+    <div class="splash-title">CACEIS · HCV Platform</div>
+    <div class="splash-sub">Select your access level to continue</div>
+  </div>
+  <div class="splash-cards">
+    <div class="splash-card" data-tier="1" onclick="selectSplashTier(1)">
+      <div class="splash-icon"><i class="fa-solid fa-crown"></i></div>
+      <div class="splash-tier-num">Tier 1</div>
+      <div class="splash-role">Chief Officer</div>
+      <div class="splash-desc">Full access: all KPIs, AI recommendations, group benchmarking, historical trends and model internals.</div>
+      <div class="splash-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+    </div>
+    <div class="splash-card" data-tier="2" onclick="selectSplashTier(2)">
+      <div class="splash-icon"><i class="fa-solid fa-building-user"></i></div>
+      <div class="splash-tier-num">Tier 2</div>
+      <div class="splash-role">BU Leadership</div>
+      <div class="splash-desc">Aggregated BU metrics, benchmark comparisons, and summarised recommendations. No model internals.</div>
+      <div class="splash-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+    </div>
+    <div class="splash-card" data-tier="3" onclick="selectSplashTier(3)">
+      <div class="splash-icon"><i class="fa-solid fa-users"></i></div>
+      <div class="splash-tier-num">Tier 3</div>
+      <div class="splash-role">Operational Manager</div>
+      <div class="splash-desc">KPI scorecard only. Group benchmarking, AI recommendations and historical trends are restricted.</div>
+      <div class="splash-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+    </div>
+  </div>
+</div>
+
+<!-- Sidebar overlay (mobile) -->
+<div id="overlay" onclick="closeSidebar()"></div>
+
+<div class="page">
+
+  <!-- ══════════════════════ SIDEBAR ══════════════════════ -->
+  <aside class="sidebar" id="sidebar">
+    <a href="index.html" class="sidebar-logo">
+      <div class="logo-mark">CA<br>CEIS</div>
+      <div>
+        <span class="logo-name">CACEIS</span>
+        <span class="logo-sub">HCV Platform</span>
+      </div>
+    </a>
+
+    <div class="sidebar-section">Navigation</div>
+    <a href="index.html" class="sidebar-link"><i class="fa-solid fa-house"></i> Overview</a>
+    <a href="#scorecard" class="sidebar-link active" onclick="closeSidebar()"><i class="fa-solid fa-gauge-high"></i> KPI Scorecard</a>
+    <a href="#comparison" class="sidebar-link" onclick="closeSidebar()"><i class="fa-solid fa-chart-bar"></i> BU Comparison</a>
+    <a href="#levers" class="sidebar-link" onclick="closeSidebar()"><i class="fa-solid fa-bolt"></i> Action Levers</a>
+    <a href="#suivi" class="sidebar-link" id="sidebar-link-suivi" onclick="closeSidebar()" style="display:none"><i class="fa-solid fa-clipboard-check"></i> Suivi <span id="suivi-sidebar-badge" style="display:none;margin-left:auto;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:700;background:rgba(86,212,135,0.18);color:var(--green-l);">0</span></a>
+    <a href="#lexique" class="sidebar-link" onclick="closeSidebar()"><i class="fa-solid fa-book"></i> Documentation</a>
+    <a href="#trend" class="sidebar-link" onclick="closeSidebar()"><i class="fa-solid fa-chart-line"></i> Trend & Forecast</a>
+
+    <div class="sidebar-section">Pilot BU</div>
+    <a href="#" class="sidebar-link active"><i class="fa-solid fa-circle-dot" style="color:var(--purple-l);"></i> Finance & Admin</a>
+    <a href="#" class="sidebar-link" onclick="toast('Coverage France dashboard coming soon')"><i class="fa-regular fa-circle"></i> Coverage France</a>
+    <a href="#" class="sidebar-link" onclick="toast('Fund Admin dashboard coming soon')"><i class="fa-regular fa-circle"></i> Fund Admin</a>
+    <a href="#" class="sidebar-link" onclick="toast('Compliance dashboard coming soon')"><i class="fa-regular fa-circle"></i> Compliance</a>
+
+    <div class="sidebar-section">Resources</div>
+    <a href="#" class="sidebar-link" onclick="toast('Documentation opening…')"><i class="fa-solid fa-file-lines"></i> Technical Docs</a>
+    <a href="#" class="sidebar-link" onclick="toast('Data catalogue coming soon')"><i class="fa-solid fa-database"></i> Data Catalogue</a>
+
+    <div class="sidebar-footer">
+      AlbertSchool Hackathon<br>
+      Deliverable 2 · April 30, 2025<br>
+      <a href="mailto:rkryslak@albertschool.com">rkryslak@albertschool.com</a>
+      <div id="data-source-note" style="margin-top:8px;font-size:10px;color:#555;line-height:1.4;">
+        Loading data…
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══════════════════════ MAIN ══════════════════════════ -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger-btn" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+        <div>
+          <div class="topbar-title">Pilot Dashboard — Finance &amp; Admin</div>
+          <div class="topbar-date" id="topbar-date"></div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <select id="bu-selector" title="Select Business Unit" onchange="onBuChange(this.value)"></select>
+        <div class="tier-toggle" title="Switch access tier">
+          <button class="tier-btn active" data-tier-btn="1" onclick="setTier(1)">T1</button>
+          <button class="tier-btn"        data-tier-btn="2" onclick="setTier(2)">T2</button>
+          <button class="tier-btn"        data-tier-btn="3" onclick="setTier(3)">T3</button>
+        </div>
+        <button id="demo-btn" onclick="launchDemo()" title="Lancer la démo guidée">
+          <i class="fa-solid fa-play fa-xs"></i> Démo
+        </button>
+        <div class="topbar-actions">
+          <button class="icon-btn" title="Changer de profil" onclick="showTierSplash()"><i class="fa-solid fa-right-left"></i></button>
+          <button class="tour-trigger" onclick="openRagPanel()" title="Analyste IA RAG" id="rag-topbar-btn" style="background:rgba(12,68,124,0.18);border-color:rgba(106,176,245,0.3);color:var(--blue-l);">
+            <i class="fa-solid fa-robot"></i> IA
+          </button>
+          <button class="tour-trigger" onclick="startTour()" title="Guided tour">
+            <i class="fa-solid fa-circle-question"></i> Guide
+          </button>
+          <div class="icon-btn" title="Export PDF" onclick="toast('PDF export queued')"><i class="fa-solid fa-file-export"></i></div>
+          <div class="icon-btn" title="Refresh data" onclick="refreshData()"><i class="fa-solid fa-rotate"></i></div>
+          <div class="icon-btn" title="Alerts" onclick="toast('No new alerts for Finance & Admin')"><i class="fa-solid fa-bell"></i></div>
+          <div class="icon-btn" title="Settings" onclick="toast('Settings panel coming in Tier 3')"><i class="fa-solid fa-gear"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- ── ACCESS TIER SELECTOR ──────────────────────── -->
+      <div class="tier-selector reveal" id="tier-selector-widget">
+        <div class="ts-header">
+          <span class="ts-header-label"><i class="fa-solid fa-lock"></i> Access Level</span>
+          <span class="ts-current-badge b1" id="ts-current-badge">Tier 1 — Chief Officer</span>
+        </div>
+
+        <div class="ts-cards">
+
+          <!-- T1 -->
+          <button class="tier-select-card ts-active" data-tier="1" onclick="setTier(1)">
+            <div class="ts-icon"><i class="fa-solid fa-crown"></i></div>
+            <div class="ts-info">
+              <div class="ts-tier-num">Tier 1</div>
+              <div class="ts-role">Chief Officer</div>
+              <div>
+                <span class="ts-perm-tag on"><i class="fa-solid fa-check fa-xs"></i> All KPIs</span>
+                <span class="ts-perm-tag on"><i class="fa-solid fa-check fa-xs"></i> AI Recommendations</span>
+                <span class="ts-perm-tag on"><i class="fa-solid fa-check fa-xs"></i> Benchmarking</span>
+                <span class="ts-perm-tag on"><i class="fa-solid fa-check fa-xs"></i> Model internals</span>
+              </div>
+            </div>
+            <div class="ts-check"><i class="fa-solid fa-circle-check"></i></div>
+          </button>
+
+          <!-- T2 -->
+          <button class="tier-select-card" data-tier="2" onclick="setTier(2)">
+            <div class="ts-icon"><i class="fa-solid fa-building-user"></i></div>
+            <div class="ts-info">
+              <div class="ts-tier-num">Tier 2</div>
+              <div class="ts-role">BU Leadership</div>
+              <div>
+                <span class="ts-perm-tag on"><i class="fa-solid fa-check fa-xs"></i> All KPIs</span>
+                <span class="ts-perm-tag on"><i class="fa-solid fa-check fa-xs"></i> Benchmarking</span>
+                <span class="ts-perm-tag on"><i class="fa-solid fa-check fa-xs"></i> Rec. summaries</span>
+                <span class="ts-perm-tag off"><i class="fa-solid fa-xmark fa-xs"></i> Model internals</span>
+              </div>
+            </div>
+            <div class="ts-check"><i class="fa-regular fa-circle"></i></div>
+          </button>
+
+          <!-- T3 -->
+          <button class="tier-select-card" data-tier="3" onclick="setTier(3)">
+            <div class="ts-icon"><i class="fa-solid fa-users"></i></div>
+            <div class="ts-info">
+              <div class="ts-tier-num">Tier 3</div>
+              <div class="ts-role">Operational Manager</div>
+              <div>
+                <span class="ts-perm-tag on"><i class="fa-solid fa-check fa-xs"></i> Basic KPIs</span>
+                <span class="ts-perm-tag off"><i class="fa-solid fa-xmark fa-xs"></i> Benchmarking</span>
+                <span class="ts-perm-tag off"><i class="fa-solid fa-xmark fa-xs"></i> Recommendations</span>
+                <span class="ts-perm-tag off"><i class="fa-solid fa-xmark fa-xs"></i> Historical trend</span>
+              </div>
+            </div>
+            <div class="ts-check"><i class="fa-regular fa-circle"></i></div>
+          </button>
+
+        </div>
+
+        <!-- Dynamic access summary bar -->
+        <div class="ts-access-bar b1" id="ts-access-bar">
+          <span><i class="fa-solid fa-circle-info"></i>
+            <strong id="ts-access-desc">Full access</strong> —
+            <span id="ts-access-sub">All KPIs, AI recommendations, group benchmarking, historical trends, and model internals are visible.</span>
+          </span>
+          <div class="ts-access-items" id="ts-access-items">
+            <span class="ts-access-item on"><i class="fa-solid fa-check fa-xs"></i> 5 KPIs</span>
+            <span class="ts-access-item on"><i class="fa-solid fa-check fa-xs"></i> Recommendations</span>
+            <span class="ts-access-item on"><i class="fa-solid fa-check fa-xs"></i> Benchmarks</span>
+            <span class="ts-access-item on"><i class="fa-solid fa-check fa-xs"></i> Trends</span>
+            <span class="ts-access-item on"><i class="fa-solid fa-check fa-xs"></i> Model internals</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- BU Header -->
+      <div class="bu-header reveal">
+        <div>
+          <div class="bu-badge"><span></span> Pilot BU · Active</div>
+          <h1 class="bu-title">Finance &amp; Admin</h1>
+          <p class="bu-sub">Business Unit performance snapshot · Data as of Q4 2024</p>
+        </div>
+        <div class="bu-meta">
+          <div class="meta-chip"><i class="fa-solid fa-users"></i> <strong id="bu-fte-text">—</strong> FTEs</div>
+          <div class="meta-chip"><i class="fa-solid fa-globe"></i> <strong>FR / LU</strong></div>
+          <div class="meta-chip"><i class="fa-solid fa-calendar"></i> <strong>FY 2024</strong></div>
+          <div class="meta-chip" id="tier-meta-chip"><i class="fa-solid fa-shield-halved"></i> <strong id="tier-chip-label">Tier 1</strong> view</div>
+          <div class="meta-chip" title="V_HC composite rank among all BUs"><i class="fa-solid fa-ranking-star" style="color:var(--amber-l)"></i> <strong id="bu-rank-chip">—</strong></div>
+          <div class="meta-chip" title="V_HC Human Capital Value Index"><i class="fa-solid fa-chart-pie" style="color:var(--teal-l)"></i> <strong id="bu-vhc-chip">—</strong></div>
+        </div>
+      </div>
+
+      <!-- Snapshot insight (single auto-generated line, all tiers) -->
+      <p id="bu-snapshot-insight" style="font-size:13px;color:var(--muted);font-style:italic;margin-bottom:20px;min-height:1.4em;"></p>
+
+      <!-- ── KPI SCORECARD ──────────────────────────────── -->
+      <div id="scorecard">
+        <div class="section-head reveal">
+          <span class="section-label"><i class="fa-solid fa-gauge-high"></i> &nbsp;KPI Scorecard</span>
+          <div class="section-title">Five-dimension capital index</div>
+        </div>
+
+        <div class="kpi-grid">
+
+          <!-- Y -->
+          <div class="kpi-card kpi-y reveal">
+            <div class="kpi-greek">Y &nbsp;—&nbsp; Engagement</div>
+            <div class="kpi-name">Employee engagement score</div>
+            <div>
+              <span class="kpi-value" id="kpi-val-Y">—</span>
+              <span class="kpi-unit">/ 5</span>
+            </div>
+            <div class="kpi-plain-text" id="plain-Y"></div>
+            <div class="kpi-vs">
+              <span class="label">vs CACEIS&nbsp;</span>
+              <span class="diff neutral" id="kpi-diff-Y">—</span>
+            </div>
+            <div class="conf-wrap">
+              <div class="conf-label"><span>Confidence</span><span>95%</span></div>
+              <div class="conf-track"><div class="conf-fill" style="width:95%"></div></div>
+            </div>
+            <button class="explain-btn" onclick="explainKpi('Y')" title="Expliquer en langage simple">
+              <i class="fa-regular fa-circle-question fa-xs"></i> Expliquer
+            </button>
+          </div>
+
+          <!-- λ -->
+          <div class="kpi-card kpi-l reveal">
+            <div class="kpi-greek">λ &nbsp;—&nbsp; Training</div>
+            <div class="kpi-name">Avg training hours / emp / yr</div>
+            <div>
+              <span class="kpi-value" id="kpi-val-L">—</span>
+              <span class="kpi-unit">h / emp</span>
+            </div>
+            <div class="kpi-plain-text" id="plain-lambda"></div>
+            <div class="kpi-vs">
+              <span class="label">vs CACEIS&nbsp;</span>
+              <span class="diff neutral" id="kpi-diff-L">—</span>
+            </div>
+            <div class="conf-wrap">
+              <div class="conf-label"><span>Confidence</span><span>90%</span></div>
+              <div class="conf-track"><div class="conf-fill" style="width:90%"></div></div>
+            </div>
+            <button class="explain-btn" onclick="explainKpi('lambda')" title="Expliquer en langage simple">
+              <i class="fa-regular fa-circle-question fa-xs"></i> Expliquer
+            </button>
+          </div>
+
+          <!-- β -->
+          <div class="kpi-card kpi-b reveal">
+            <div class="kpi-greek">β &nbsp;—&nbsp; Performance</div>
+            <div class="kpi-name">Mean EAE rating (2024)</div>
+            <div>
+              <span class="kpi-value" id="kpi-val-B">—</span>
+              <span class="kpi-unit">/ 5</span>
+            </div>
+            <div class="kpi-plain-text" id="plain-beta"></div>
+            <div class="kpi-vs">
+              <span class="label">vs CACEIS&nbsp;</span>
+              <span class="diff neutral"><i class="fa-solid fa-minus fa-xs"></i> =</span>
+            </div>
+            <div class="conf-wrap">
+              <div class="conf-label"><span>Confidence</span><span>98%</span></div>
+              <div class="conf-track"><div class="conf-fill" style="width:98%"></div></div>
+            </div>
+            <button class="explain-btn" onclick="explainKpi('beta')" title="Expliquer en langage simple">
+              <i class="fa-regular fa-circle-question fa-xs"></i> Expliquer
+            </button>
+          </div>
+
+          <!-- P -->
+          <div class="kpi-card kpi-p reveal">
+            <div class="kpi-greek">P &nbsp;—&nbsp; Productivity</div>
+            <div class="kpi-name">NBI / FTE CAGR 2022→2025</div>
+            <div>
+              <span class="kpi-value" id="kpi-val-P">—</span>
+              <span class="kpi-unit">pts</span>
+            </div>
+            <div class="kpi-plain-text" id="plain-P"></div>
+            <div class="kpi-vs">
+              <span class="label">Group CAGR&nbsp;</span>
+              <span class="diff up"><i class="fa-solid fa-arrow-up fa-xs"></i> in line</span>
+            </div>
+            <div class="conf-wrap">
+              <div class="conf-label"><span>Confidence</span><span>85%</span></div>
+              <div class="conf-track"><div class="conf-fill" style="width:85%"></div></div>
+            </div>
+            <button class="explain-btn" onclick="explainKpi('P')" title="Expliquer en langage simple">
+              <i class="fa-regular fa-circle-question fa-xs"></i> Expliquer
+            </button>
+          </div>
+
+          <!-- ρ -->
+          <div class="kpi-card kpi-r reveal">
+            <div class="kpi-greek">ρ &nbsp;—&nbsp; Absenteeism</div>
+            <div class="kpi-name">Absenteeism rate (days lost)</div>
+            <div>
+              <span class="kpi-value" id="kpi-val-R">—</span>
+              <span class="kpi-unit">%</span>
+            </div>
+            <div class="kpi-plain-text" id="plain-rho"></div>
+            <div class="kpi-vs">
+              <span class="label">vs CACEIS&nbsp;</span>
+              <span class="diff neutral" id="kpi-diff-R">—</span>
+            </div>
+            <div class="conf-wrap">
+              <div class="conf-label"><span>Confidence</span><span>92%</span></div>
+              <div class="conf-track"><div class="conf-fill" style="width:92%"></div></div>
+            </div>
+            <button class="explain-btn" onclick="explainKpi('rho')" title="Expliquer en langage simple">
+              <i class="fa-regular fa-circle-question fa-xs"></i> Expliquer
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── COMPARISON + LEVERS ────────────────────────── -->
+      <div class="two-col" id="comparison">
+
+        <!-- Horizontal bar comparison -->
+        <div class="panel reveal">
+          <div class="panel-title">
+            BU Benchmark — Engagement (Y)
+            <span class="panel-badge">vs 4 reference entities</span>
+          </div>
+
+          <div class="bar-list" id="bar-list-container">
+            <!-- populated from kpi-output.json -->
+          </div>
+
+          <!-- Full KPI comparison table -->
+          <div id="comparison-table" style="margin-top:22px;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>BU</th>
+                  <th>Y</th>
+                  <th>λ</th>
+                  <th>ρ</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="comparison-tbody">
+                <!-- populated from kpi-output.json -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="insight-row" id="comparison-insight-row">
+            <span class="insight-pill alert"><i class="fa-solid fa-circle-exclamation"></i> Bottom quartile on Y</span>
+            <span class="insight-pill good"><i class="fa-solid fa-circle-check"></i> Top on λ training</span>
+            <span class="insight-pill warn"><i class="fa-solid fa-triangle-exclamation"></i> ρ above avg</span>
+          </div>
+        </div>
+
+        <!-- Multi-KPI radar chart -->
+        <div class="panel reveal" id="radar-panel">
+          <div class="panel-title">
+            Multi-KPI Radar &nbsp;<span class="subtitle">Finance &amp; Admin vs Group</span>
+          </div>
+          <div class="chart-wrap-tall">
+            <canvas id="radarChart"></canvas>
+          </div>
+          <div class="insight-row" style="margin-top:10px;">
+            <span class="insight-pill good"><i class="fa-solid fa-trophy"></i> Outperforms on β &amp; λ</span>
+            <span class="insight-pill alert"><i class="fa-solid fa-arrow-down"></i> Lags on Y &amp; ρ</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── ACTION LEVERS ──────────────────────────────── -->
+      <div id="levers" style="margin-bottom:28px;">
+        <div class="section-head reveal" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+          <div>
+            <span class="section-label"><i class="fa-solid fa-bolt"></i> &nbsp;Action Levers</span>
+            <div class="section-title" id="levers-section-title">AI-powered action plan</div>
+          </div>
+          <button class="btn-generate-levers" id="btn-generate-levers" onclick="generateLevers()">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Générer les recommandations
+          </button>
+        </div>
+
+        <!-- Loading -->
+        <div id="levers-loading" style="display:none;padding:32px 0;text-align:center;">
+          <div style="display:inline-flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;">
+            <div style="width:16px;height:16px;border:2px solid rgba(168,160,255,0.3);border-top-color:var(--purple-l);border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0;"></div>
+            Appel Claude en cours — ~10–15s…
+          </div>
+        </div>
+
+        <!-- Empty state -->
+        <div id="levers-empty">
+          <div class="lever reveal" style="cursor:default;">
+            <div class="lever-head">
+              <span class="lever-num">Action Levers — IA</span>
+            </div>
+            <div class="lever-title" style="color:var(--muted)">Cliquez sur "Générer les recommandations" pour lancer l'analyse</div>
+            <div class="lever-detail">
+              <div class="lever-desc">L'IA analysera les KPIs de la BU sélectionnée et proposera des actions documentées depuis la bibliothèque CACEIS (26 actions sourcées).</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Generated content -->
+        <div id="levers-content" style="display:none;"></div>
+      </div>
+
+      <!-- ── TREND + PROJECTION ─────────────────────────── -->
+      <div class="two-col" id="trend">
+
+        <!-- Engagement trend line -->
+        <div class="panel reveal">
+          <div class="panel-title">
+            Engagement (Y) — Historical &amp; 5Y Projection
+            <span class="panel-badge">IMR 2021–2025</span>
+          </div>
+          <div class="chart-wrap-tall">
+            <canvas id="trendChart"></canvas>
+          </div>
+          <div class="insight-row" style="margin-top:10px;">
+            <span class="insight-pill warn"><i class="fa-solid fa-chart-line"></i> Flat trend 2022–2024</span>
+            <span class="insight-pill good"><i class="fa-solid fa-wand-magic-sparkles"></i> Target 3.60 by 2029</span>
+          </div>
+        </div>
+
+        <!-- Multi-dimension trends -->
+        <div class="panel reveal" id="multi-panel">
+          <div class="panel-title">
+            Multi-KPI Comparison &nbsp;<span class="subtitle">Finance &amp; Admin vs Group · 2024</span>
+          </div>
+          <div class="chart-wrap-tall">
+            <canvas id="multiChart"></canvas>
+          </div>
+          <div class="insight-row" style="margin-top:10px;">
+            <span class="insight-pill good"><i class="fa-solid fa-arrow-up"></i> β +0.12 pts</span>
+            <span class="insight-pill warn"><i class="fa-solid fa-minus"></i> Y stagnant</span>
+            <span class="insight-pill alert"><i class="fa-solid fa-arrow-up"></i> ρ +0.4pp</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── ABSENTEEISM DISTRIBUTION ─────────────────── -->
+      <div class="panel reveal" id="section-absenteeism" style="margin-bottom:28px;">
+        <div class="panel-title">
+          Absenteeism — Monthly Distribution 2024 (Finance &amp; Admin)
+          <span class="panel-badge">Bilan Social 2025 extract</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="absChart"></canvas>
+        </div>
+        <div class="insight-row" style="margin-top:10px;">
+          <span class="insight-pill alert"><i class="fa-solid fa-calendar-xmark"></i> Peak: Jan &amp; Oct (regulatory reporting)</span>
+          <span class="insight-pill warn"><i class="fa-solid fa-calendar"></i> Low: Jul–Aug (holiday effect)</span>
+        </div>
+      </div>
+
+      <!-- ── COMPOSITE HCV SCORE (T1 only) ────────────── -->
+      <div class="panel reveal" id="section-composite" style="margin-bottom:28px;">
+        <div class="panel-title">
+          Composite HCV Score — Model internals
+          <span class="panel-badge">Model internals</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="compositeChart"></canvas>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-top:12px;">PCA-derived weights: Y×0.35 + λ×0.20 + β×0.25 + P×0.10 + (1−ρ)×0.10. Composite = <strong style="color:var(--purple-l)" id="composite-score-text">—</strong>.</p>
+      </div>
+
+      <!-- ── SUIVI (T1 only) ───────────────────────────── -->
+      <div id="suivi" style="margin-bottom:28px;display:none;">
+        <div class="section-head" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+          <div>
+            <span class="section-label"><i class="fa-solid fa-clipboard-check"></i> &nbsp;Suivi des actions</span>
+            <div class="section-title">Actions validées — Tier 1</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div id="suivi-progress-wrap" style="display:none;flex-direction:column;align-items:flex-end;gap:4px;min-width:140px;">
+              <span id="suivi-progress-label" style="font-size:11px;color:var(--muted);"></span>
+              <div class="suivi-progress-bar" style="width:140px;">
+                <div class="suivi-progress-fill" id="suivi-progress-fill" style="width:0%;"></div>
+              </div>
+            </div>
+            <button id="reset-demo-btn" onclick="resetDemo()">
+              <i class="fa-solid fa-arrow-rotate-left fa-xs"></i> Reset démo
+            </button>
+            <button onclick="clearSuivi()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:color .2s,border-color .2s;" onmouseover="this.style.color='var(--coral-l)';this.style.borderColor='rgba(240,112,112,.35)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">
+              <i class="fa-solid fa-rotate-left"></i> Réinitialiser
+            </button>
+          </div>
+        </div>
+
+        <!-- Empty state -->
+        <div id="suivi-empty" class="suivi-empty">
+          <i class="fa-solid fa-clipboard-list"></i>
+          <p>Aucune action validée pour le moment.</p>
+          <small>Validez des actions depuis la section Action Levers pour les suivre ici.</small>
+        </div>
+
+        <!-- Table -->
+        <div id="suivi-table-wrap" style="display:none;" class="panel" style="padding:0;overflow:hidden;">
+          <table class="suivi-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Action</th>
+                <th>KPI</th>
+                <th>BU</th>
+                <th>Validée le</th>
+                <th>Statut</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="suivi-tbody"></tbody>
+          </table>
+        </div>
+
+        <!-- Coming soon banner -->
+        <div class="suivi-coming-soon">
+          <i class="fa-solid fa-plug"></i>
+          <div>
+            <strong>Intégrations à venir</strong> —
+            Synchronisation automatique avec <strong>Microsoft Teams</strong>, <strong>SharePoint</strong> et <strong>Workday</strong> pour le suivi des actions RH.
+          </div>
+        </div>
+      </div>
+
+      <!-- ── LEXIQUE / DOCUMENTATION ──────────────────────── -->
+      <div id="lexique" style="margin-bottom:28px;">
+        <div class="section-head reveal">
+          <span class="section-label"><i class="fa-solid fa-book"></i> &nbsp;Documentation</span>
+          <div class="section-title">Référentiel du modèle</div>
+        </div>
+
+        <div class="lex-accordion">
+
+          <!-- Section 1 — Formule V_HC -->
+          <div class="lex-item open" id="lex-item-0">
+            <button class="lex-trigger" onclick="toggleLex(0)">
+              La formule V_HC
+              <i class="fa-solid fa-chevron-right lex-chevron"></i>
+            </button>
+            <div class="lex-body">
+              <div class="lex-formula">V_HC = Σ [ P · Y · α · β / (1+r)<sup>t</sup> ] × (1−ρ) × λ</div>
+              <p style="margin-bottom:12px;">V pour Value, HC pour Human Capital. On projette ce que les équipes vont produire dans le futur, on actualise ces flux comme on le ferait pour un actif financier (même logique qu'IFRS / IAS 36-38), et on corrige par le risque que des personnes clés partent. Le résultat est un indice par BU.</p>
+              <div>
+                <div class="lex-param-row"><span class="lex-param-key" style="color:var(--purple-l)">Y</span><span class="lex-param-desc">Score d'engagement moyen de la BU (EAE)</span></div>
+                <div class="lex-param-row"><span class="lex-param-key" style="color:var(--teal-l)">λ</span><span class="lex-param-desc">Heures de formation par employé et par an</span></div>
+                <div class="lex-param-row"><span class="lex-param-key" style="color:var(--amber-l)">β</span><span class="lex-param-desc">Score de qualité de formation (Quick Review)</span></div>
+                <div class="lex-param-row"><span class="lex-param-key" style="color:var(--blue-l)">P</span><span class="lex-param-desc">Productivité — CAGR NBI/FTE 2022→2025</span></div>
+                <div class="lex-param-row"><span class="lex-param-key" style="color:var(--muted)">α</span><span class="lex-param-desc">Facteur de rétention des talents clés</span></div>
+                <div class="lex-param-row"><span class="lex-param-key" style="color:var(--coral-l)">ρ</span><span class="lex-param-desc">Taux d'absentéisme (jours perdus / jours ouvrables)</span></div>
+                <div class="lex-param-row"><span class="lex-param-key" style="color:var(--muted)">r</span><span class="lex-param-desc">Taux d'actualisation (coût du capital humain)</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2 — Les 5 KPIs -->
+          <div class="lex-item" id="lex-item-1">
+            <button class="lex-trigger" onclick="toggleLex(1)">
+              Les 5 KPIs
+              <i class="fa-solid fa-chevron-right lex-chevron"></i>
+            </button>
+            <div class="lex-body">
+              <table class="lex-kpi-table">
+                <thead>
+                  <tr>
+                    <th>KPI</th><th>Formule courte</th><th>Question</th><th>Source</th><th>Limite connue</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="color:var(--purple-l)">Y</td>
+                    <td>mean(EAE) par BU</td>
+                    <td>Sont-ils productifs ?</td>
+                    <td>3 477 EAE 2024</td>
+                    <td>Score proxy, pas revenus</td>
+                  </tr>
+                  <tr>
+                    <td style="color:var(--teal-l)">λ</td>
+                    <td>heures_formation / n_emp</td>
+                    <td>S'adaptent-ils au changement ?</td>
+                    <td>13 702 sessions</td>
+                    <td>95% compliance</td>
+                  </tr>
+                  <tr>
+                    <td style="color:var(--amber-l)">β</td>
+                    <td>mean(satisfaction QR)</td>
+                    <td>La formation fonctionne-t-elle ?</td>
+                    <td>4 246 avis</td>
+                    <td>Score global, pas par BU</td>
+                  </tr>
+                  <tr>
+                    <td style="color:var(--blue-l)">P</td>
+                    <td>mean_2024 − mean_2023</td>
+                    <td>La valeur monte ou s'érode ?</td>
+                    <td>6 000 évaluations</td>
+                    <td>Global, pas par BU</td>
+                  </tr>
+                  <tr>
+                    <td style="color:var(--coral-l)">ρ</td>
+                    <td>jours_santé / (n_emp × 220)</td>
+                    <td>Risque si les clés partent ?</td>
+                    <td>127 825 absences</td>
+                    <td>Proxy indirect</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Section 3 — Glossaire -->
+          <div class="lex-item" id="lex-item-2">
+            <button class="lex-trigger" onclick="toggleLex(2)">
+              Glossaire
+              <i class="fa-solid fa-chevron-right lex-chevron"></i>
+            </button>
+            <div class="lex-body">
+              <div class="lex-glossary-row"><span class="lex-glossary-term">EAE</span> — Entretien Annuel d'Évaluation. Note de performance 1-5.</div>
+              <div class="lex-glossary-row"><span class="lex-glossary-term">SLA</span> — Service Level Agreement. Délais et taux d'erreur opérationnels.</div>
+              <div class="lex-glossary-row"><span class="lex-glossary-term">NBI</span> — Net Banking Income. Produit Net Bancaire.</div>
+              <div class="lex-glossary-row"><span class="lex-glossary-term">FTE</span> — Full-Time Equivalent. Équivalent Temps Plein.</div>
+              <div class="lex-glossary-row"><span class="lex-glossary-term">RAG</span> — Retrieval-Augmented Generation. L'IA récupère des docs avant de répondre.</div>
+              <div class="lex-glossary-row"><span class="lex-glossary-term">QVCT</span> — Qualité de Vie et Conditions de Travail.</div>
+              <div class="lex-glossary-row"><span class="lex-glossary-term">IRP</span> — Instances Représentatives du Personnel.</div>
+              <div class="lex-glossary-row"><span class="lex-glossary-term">Proxy</span> — Mesure de substitution quand la mesure directe n'est pas disponible.</div>
+              <div class="lex-glossary-row"><span class="lex-glossary-term">Cold Review</span> — Évaluation différée d'une formation (impact réel).</div>
+              <div class="lex-glossary-row"><span class="lex-glossary-term">Quick Review</span> — Évaluation à chaud d'une formation (satisfaction immédiate).</div>
+              <div class="lex-glossary-row"><span class="lex-glossary-term">FAB'Life</span> — Programme QVCT interne CACEIS.</div>
+            </div>
+          </div>
+
+          <!-- Section 4 — Limites du modèle -->
+          <div class="lex-item" id="lex-item-3">
+            <button class="lex-trigger" onclick="toggleLex(3)">
+              Limites du modèle
+              <i class="fa-solid fa-chevron-right lex-chevron"></i>
+            </button>
+            <div class="lex-body">
+              <ul class="lex-limits">
+                <li>Y est un proxy de score EAE, pas de revenus par FTE</li>
+                <li>β est global — pas de ventilation par BU disponible</li>
+                <li>P est global — baseline 2023 sans champ BU</li>
+                <li>Lien causal avec les SLA non établi</li>
+                <li>Aucun score individuel — agrégats BU uniquement</li>
+                <li>Seuil minimum 5 employés par BU (RGPD)</li>
+              </ul>
+            </div>
+          </div>
+
+        </div><!-- /lex-accordion -->
+      </div><!-- /#lexique -->
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /page -->
+
+<!-- Toast -->
+<div id="toast"><i class="fa-solid fa-circle-check"></i><span id="toast-msg">Done</span></div>
+
+<script>
+/* ─── Date ───────────────────────────────────────────────────────────────── */
+document.getElementById('topbar-date').textContent =
+  new Date().toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'long', year:'numeric' });
+
+/* ─── Tier Splash ────────────────────────────────────────────────────────── */
+function showTierSplash() {
+  const splash = document.getElementById('tier-splash');
+  if (splash) splash.style.display = 'flex';
+}
+
+function selectSplashTier(n) {
+  sessionStorage.setItem('hcv_tier', String(n));
+  const splash = document.getElementById('tier-splash');
+  if (splash) splash.style.display = 'none';
+  setTier(n);
+}
+
+// Apply tier from sessionStorage > URL param; show splash if none
+let currentTier = 1;
+window.addEventListener('load', () => {
+  const stored  = parseInt(sessionStorage.getItem('hcv_tier'));
+  const urlTier = parseInt(new URLSearchParams(window.location.search).get('tier')) || 0;
+  const safeTier = [1,2,3].includes(stored) ? stored
+                 : [1,2,3].includes(urlTier) ? urlTier
+                 : null;
+
+  if (safeTier) {
+    const splash = document.getElementById('tier-splash');
+    if (splash) splash.style.display = 'none';
+    setTier(safeTier);
+    setTimeout(() => {
+      if (!localStorage.getItem('hcv_tour_t' + safeTier)) startTour(safeTier);
+    }, 900);
+  }
+  // else: splash stays visible (display:flex from CSS)
+});
+
+/* ─── Toast ──────────────────────────────────────────────────────────────── */
+let toastT;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove('show'), 3000);
+}
+// expose globally for inline handlers
+window.toast = toast;
+
+/* ─── Tier configuration ─────────────────────────────────────────────────── */
+const TIER_META = {
+  1: {
+    label:       'Tier 1 — Chief Officer',
+    badgeClass:  'b1',
+    accessDesc:  'Full access',
+    accessSub:   'All KPIs, AI recommendations, group benchmarking, historical trends, and model internals are visible.',
+    accessItems: [
+      { on: true,  text: '5 KPIs + confidence' },
+      { on: true,  text: 'AI Recommendations' },
+      { on: true,  text: 'Group benchmarks' },
+      { on: true,  text: 'Historical trends' },
+      { on: true,  text: 'Model internals' },
+    ],
+    msg: 'Chief Officer view — full access activated',
+  },
+  2: {
+    label:       'Tier 2 — BU Leadership',
+    badgeClass:  'b2',
+    accessDesc:  'BU Leadership view',
+    accessSub:   'Aggregated BU metrics, benchmark comparisons, and summarised recommendations. Model internals restricted.',
+    accessItems: [
+      { on: true,  text: '5 KPIs + confidence' },
+      { on: true,  text: 'Rec. summaries' },
+      { on: true,  text: 'Group benchmarks' },
+      { on: true,  text: 'Historical trends' },
+      { on: false, text: 'Model internals' },
+    ],
+    msg: 'BU Leadership view — detailed AI reasoning and model internals hidden',
+  },
+  3: {
+    label:       'Tier 3 — Operational Manager',
+    badgeClass:  'b3',
+    accessDesc:  'Operational view',
+    accessSub:   'Team-level KPIs only. Group benchmarking, AI recommendations, and historical trends are restricted.',
+    accessItems: [
+      { on: true,  text: '5 basic KPIs' },
+      { on: false, text: 'Recommendations' },
+      { on: false, text: 'Group benchmarks' },
+      { on: false, text: 'Historical trends' },
+      { on: false, text: 'Model internals' },
+    ],
+    msg: 'Operational Manager view — KPI scorecard only, all analysis sections hidden',
+  },
+};
+
+/* ─── Tier toggle (main function) ───────────────────────────────────────── */
+function setTier(n) {
+  const prev = currentTier;
+  currentTier = n;
+  document.body.setAttribute('data-tier', n);
+  const meta = TIER_META[n];
+
+  // ── 1. Sync topbar pill buttons ──────────────────────
+  document.querySelectorAll('[data-tier-btn]').forEach(b => {
+    b.classList.toggle('active', +b.dataset.tierBtn === n);
+  });
+
+  // ── 2. Sync selector cards ───────────────────────────
+  document.querySelectorAll('.tier-select-card').forEach(c => {
+    const active = +c.dataset.tier === n;
+    c.classList.toggle('ts-active', active);
+    const icon = c.querySelector('.ts-check i');
+    if (icon) icon.className = active ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle';
+  });
+
+  // ── 3. Update badge + access bar ────────────────────
+  const badge = document.getElementById('ts-current-badge');
+  if (badge) {
+    badge.textContent  = meta.label;
+    badge.className    = 'ts-current-badge ' + meta.badgeClass;
+  }
+  const bar = document.getElementById('ts-access-bar');
+  if (bar) {
+    bar.className = 'ts-access-bar ' + meta.badgeClass;
+    document.getElementById('ts-access-desc').textContent = meta.accessDesc;
+    document.getElementById('ts-access-sub').textContent  = meta.accessSub;
+    const items = document.getElementById('ts-access-items');
+    items.innerHTML = meta.accessItems.map(i =>
+      `<span class="ts-access-item ${i.on ? 'on' : 'off'}">
+         <i class="fa-solid ${i.on ? 'fa-check' : 'fa-xmark'} fa-xs"></i> ${i.text}
+       </span>`
+    ).join('');
+  }
+
+  // ── 4. Update meta chip in BU header ────────────────
+  const chip = document.getElementById('tier-chip-label');
+  if (chip) chip.textContent = 'Tier ' + n;
+
+  // ── 5. Section / element visibility helpers ──────────
+  const s  = el => { if (el) el.style.display = ''; };
+  const h  = el => { if (el) el.style.display = 'none'; };
+  const sa = sel => document.querySelectorAll(sel).forEach(el => el.style.display = '');
+  const ha = sel => document.querySelectorAll(sel).forEach(el => el.style.display = 'none');
+
+  // Grab all controlled elements
+  const EL = {
+    comparison:       document.getElementById('comparison'),
+    compTable:        document.getElementById('comparison-table'),
+    radarPanel:       document.getElementById('radar-panel'),
+    levers:           document.getElementById('levers'),
+    trend:            document.getElementById('trend'),
+    multiPanel:       document.getElementById('multi-panel'),
+    absenteeism:      document.getElementById('section-absenteeism'),
+    composite:        document.getElementById('section-composite'),
+    suivi:            document.getElementById('suivi'),
+    sidebarSuivi:     document.getElementById('sidebar-link-suivi'),
+  };
+
+  // ── 6. Apply visibility rules per tier ───────────────
+  // demo-btn: T1 only
+  const demoBtn = document.getElementById('demo-btn');
+  if (demoBtn) demoBtn.style.display = (n === 1) ? 'inline-flex' : 'none';
+
+  if (n === 1) {
+    // ╔═══════════════════════════════════╗
+    // ║  TIER 1 — Chief Officer           ║
+    // ║  Full access: show everything     ║
+    // ╚═══════════════════════════════════╝
+    s(EL.comparison);       s(EL.compTable);     s(EL.radarPanel);
+    s(EL.levers);
+    s(EL.trend);            s(EL.multiPanel);
+    s(EL.absenteeism);      s(EL.composite);
+    s(EL.suivi);            s(EL.sidebarSuivi);
+    sa('.conf-wrap');
+    ha('.lever-summary-text');
+    sa('.lever-detail');
+    sa('.explain-btn');                          // show explain buttons T1+T2
+    renderSuivi();
+
+  } else if (n === 2) {
+    // ╔═══════════════════════════════════╗
+    // ║  TIER 2 — BU Leadership           ║
+    // ║  Hides: model internals,          ║
+    // ║  lever full detail & source       ║
+    // ╚═══════════════════════════════════╝
+    s(EL.comparison);       s(EL.compTable);     s(EL.radarPanel);
+    s(EL.levers);
+    s(EL.trend);            s(EL.multiPanel);
+    s(EL.absenteeism);
+    h(EL.composite);                             // no model internals
+    h(EL.suivi);            h(EL.sidebarSuivi);  // T1 only
+    sa('.conf-wrap');
+    sa('.lever-summary-text');                   // show brief summary
+    ha('.lever-detail');                         // hide full desc + source
+    sa('.explain-btn');                          // show explain buttons T1+T2
+
+  } else {
+    // ╔═══════════════════════════════════╗
+    // ║  TIER 3 — Operational Manager    ║
+    // ║  KPI scorecard only              ║
+    // ╚═══════════════════════════════════╝
+    h(EL.comparison);                            // no group benchmarking
+    h(EL.levers);                                // no AI recommendations
+    h(EL.trend);                                 // no historical trend
+    h(EL.absenteeism);      h(EL.composite);
+    h(EL.suivi);            h(EL.sidebarSuivi);  // T1 only
+    ha('.conf-wrap');                            // hide confidence bars
+    ha('.lever-summary-text');
+    ha('.lever-detail');
+    ha('.explain-btn');                          // hide explain buttons T3
+  }
+
+  toast(meta.msg);
+}
+
+/* ─── Sidebar (mobile) ───────────────────────────────────────────────────── */
+function toggleSidebar() {
+  const s = document.getElementById('sidebar');
+  const o = document.getElementById('overlay');
+  const open = s.classList.contains('open');
+  s.classList.toggle('open', !open);
+  o.classList.toggle('show', !open);
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+/* ─── Scroll reveal ──────────────────────────────────────────────────────── */
+const revObs = new IntersectionObserver(entries => {
+  entries.forEach((e,i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), i*60);
+      revObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => revObs.observe(el));
+
+/* ─── Animate horizontal bars ────────────────────────────────────────────── */
+const barObs = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.querySelectorAll('.bar-fill[data-w]').forEach(b => {
+        setTimeout(() => { b.style.width = b.dataset.w; }, 200);
+      });
+      barObs.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.2 });
+document.querySelectorAll('.panel').forEach(p => barObs.observe(p));
+
+/* ─── Refresh animation ──────────────────────────────────────────────────── */
+function refreshData() {
+  toast('Data refreshed — last sync: ' + new Date().toLocaleTimeString());
+}
+
+/* ─── Chart.js defaults ──────────────────────────────────────────────────── */
+Chart.defaults.color = '#8888a8';
+Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+Chart.defaults.font.size   = 11;
+
+const PURPLE = '#a8a0ff', TEAL = '#5cd9c0', AMBER = '#f0b545',
+      BLUE = '#6ab0f5', CORAL = '#f08080', GREEN = '#56d487', MUTED = '#8888a8';
+
+/* ─── Data-driven initialisation ─────────────────────────────────────────── */
+let KPI_DATA = null;
+
+async function loadKpiData() {
+  const paths = [
+    './data/kpi-output.json',
+    '../rag/data/kpi-output.json',
+    'http://localhost:8000/kpi-data',
+  ];
+  for (const path of paths) {
+    try {
+      const r = await fetch(path);
+      if (r.ok) return await r.json();
+    } catch(e) {}
+  }
+  return null;
+}
+
+function computeGroupStats(data) {
+  const arr = data.business_units;
+  const avg = a => a.reduce((s, v) => s + v, 0) / a.length;
+  return {
+    Y_caceis_2024:        avg(arr.map(b => b.kpi_Y)),
+    lambda_caceis_2024:   avg(arr.map(b => b.kpi_lambda)),
+    beta_eae_caceis_2024: avg(arr.map(b => b.kpi_beta_eae)),
+    P_cagr_2022_2025:     avg(arr.map(b => b.kpi_P)),
+    rho_caceis_fr_2024:   avg(arr.map(b => b.kpi_rho)) * 100,
+  };
+}
+
+loadKpiData()
+  .then(data => {
+    if (!data) {
+      const banner = document.createElement('div');
+      banner.className = 'alert-banner warn';
+      banner.style.cssText = 'position:fixed;top:0;left:240px;right:0;z-index:9999;border-radius:0;margin:0;';
+      banner.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>' +
+        '<p>⚠ KPI data not found. Make sure the RAG server is running on port 8000, or that rag/data/kpi-output.json exists.</p>';
+      document.body.appendChild(banner);
+      return;
+    }
+    KPI_DATA = data;
+    data._stats = computeGroupStats(data);
+    buildBUSelector(data);
+    const bu = data.business_units.find(b => b.is_pilot) || data.business_units[0];
+    populateKpiCards(data, bu);
+    buildComparisonBars(data, bu);
+    buildComparisonTable(data, bu);
+    updateLevers(data, bu);
+    updateMetaChips(data, bu);
+    initCharts(data, bu);
+  })
+  .catch(err => console.warn('[HCV] KPI data error:', err));
+
+/* ─── Snapshot insight (auto-generated, all tiers) ──────────────────────── */
+function buildSnapshotInsight(bu, gs) {
+  const gaps = [];
+  if (bu.kpi_Y < 3.40)
+    gaps.push({ kpi: 'Y', label: 'engagement', delta: (bu.kpi_Y - 3.40).toFixed(2) });
+  if (bu.kpi_rho > 0.048)
+    gaps.push({ kpi: 'ρ', label: 'absentéisme', delta: '+' + ((bu.kpi_rho - 0.048) * 100).toFixed(1) + 'pp' });
+  if (bu.kpi_lambda < 44.6)
+    gaps.push({ kpi: 'λ', label: 'formation', delta: (bu.kpi_lambda - 44.6).toFixed(1) + 'h' });
+
+  const strengths = [];
+  if (bu.kpi_Y >= 3.60)           strengths.push('engagement au-dessus de la moyenne');
+  if (bu.kpi_rho <= 0.030)        strengths.push('faible absentéisme');
+  if (bu.kpi_lambda >= 44.6)      strengths.push('bon volume de formation');
+  if (bu.kpi_beta_qr >= 4.40)     strengths.push('formations bien évaluées');
+
+  let insight = '';
+  if (gaps.length > 0) {
+    const g = gaps[0];
+    insight += `Principal gap : <strong>${g.label}</strong> (${g.delta} vs groupe). `;
+  }
+  if (strengths.length > 0) {
+    insight += `Point fort : ${strengths[0]}.`;
+  }
+  if (!insight) {
+    insight = 'BU dans la moyenne sur tous les KPIs.';
+  }
+  return insight;
+}
+
+/* ─── Meta chips & title ─────────────────────────────────────────────────── */
+function updateMetaChips(data, bu) {
+  const gs = data.group_summary || data._stats || {};
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+
+  set('bu-fte-text',  bu.n_employees ? '~' + bu.n_employees : '—');
+  set('bu-rank-chip', bu.rank ? `Rank ${bu.rank} / ${bu.total_rank}` : '—');
+  set('bu-vhc-chip',  bu.v_hc_index != null ? `V_HC ${bu.v_hc_index.toFixed(4)}` : '—');
+
+  // Update page title area
+  const titleEl = document.querySelector('.topbar-title');
+  if (titleEl) titleEl.textContent = `Pilot Dashboard — ${bu.name}`;
+  const buTitleEl = document.querySelector('.bu-title');
+  if (buTitleEl) buTitleEl.textContent = bu.name;
+
+  // Composite score
+  const wts = data.composite_index ? data.composite_index.weights : { Y:0.35, lambda:0.2, beta:0.25, P:0.1, rho:0.1 };
+  const composite = (
+    (bu.kpi_Y / 5)                        * wts.Y      +
+    (Math.min(bu.kpi_lambda, 100) / 100)  * wts.lambda +
+    (bu.kpi_beta_eae / 5)                 * wts.beta   +
+    Math.max(0, bu.kpi_P + 0.5)           * wts.P      +
+    (1 - bu.kpi_rho)                      * wts.rho
+  );
+  set('composite-score-text', composite.toFixed(4) + ' / 1.0');
+
+  // Snapshot insight
+  const insightEl = document.getElementById('bu-snapshot-insight');
+  if (insightEl) insightEl.innerHTML = buildSnapshotInsight(bu, gs);
+
+
+  const srcEl = document.getElementById('data-source-note');
+  if (srcEl && data.metadata) {
+    srcEl.textContent = `Data extracted ${data.metadata.extraction_date} · `
+      + `${data.metadata.coverage.eae_evaluations.toLocaleString()} EAE evaluations · `
+      + `${data.metadata.coverage.training_records.toLocaleString()} training records · `
+      + `${data.metadata.coverage.business_units} BUs`;
+  }
+}
+
+/* ─── KPI plain-language text ────────────────────────────────────────────── */
+const KPI_PLAIN_TEXT = {
+  Y: (val) => {
+    if (val < 3.20) return "Vos équipes sont en retrait marqué par rapport à CACEIS.";
+    if (val < 3.40) return "Vos équipes s'impliquent légèrement moins que la moyenne.";
+    if (val < 3.60) return "Engagement dans la moyenne groupe.";
+    return "Vos équipes sont parmi les plus engagées du groupe.";
+  },
+  lambda: (val) => {
+    if (val < 30)   return "Volume de formation faible — en dessous des standards CACEIS.";
+    if (val < 44.6) return "Formation légèrement sous la moyenne groupe.";
+    return "Bon volume de formation — au-dessus de la moyenne.";
+  },
+  beta: (val) => {
+    if (val < 4.00) return "Qualité de formation à améliorer.";
+    if (val < 4.40) return "Qualité dans la moyenne.";
+    return "Formations bien évaluées par les équipes.";
+  },
+  rho: (val) => {
+    if (val > 0.048) return "Absentéisme au-dessus de la moyenne — point d'attention.";
+    if (val > 0.040) return "Absentéisme dans la moyenne.";
+    return "Faible absentéisme — situation saine.";
+  },
+  P: (val) => {
+    if (val > 0.10) return "Productivité en croissance.";
+    if (val > 0)    return "Productivité stable.";
+    return "Productivité en recul — à surveiller.";
+  },
+};
+
+const LEVER_SCORER = {
+  gapScore(lever, kpiData) {
+    const kpi = lever.kpi_impacted;
+    const scores = {
+      'Y':   () => Math.max(0, (3.40 - (kpiData.kpi_Y       || 3.40))) * 10,
+      'β':   () => Math.max(0, (4.40 - (kpiData.kpi_beta_qr || 4.40))) * 8,
+      'ρ':   () => Math.max(0, ((kpiData.kpi_rho || 0) - 0.048))       * 100,
+      'λ':   () => Math.max(0, (44.6 - (kpiData.kpi_lambda  || 44.6))) * 0.5,
+    };
+    return (scores[kpi] ? scores[kpi]() : 0);
+  },
+  delaiScore(lever) {
+    const d = lever.delai_effet || '';
+    if (d.includes('1-3'))  return 3;
+    if (d.includes('3-6'))  return 2;
+    if (d.includes('6-12')) return 1;
+    return 0;
+  },
+  careerPenalty(lever) {
+    return lever.career_development ? -0.5 : 0;
+  },
+  total(lever, kpiData) {
+    return this.gapScore(lever, kpiData)
+         + this.delaiScore(lever)
+         + this.careerPenalty(lever);
+  },
+};
+
+function updatePlainText(bu) {
+  const pairs = [
+    { id: 'plain-Y',      fn: KPI_PLAIN_TEXT.Y,      val: bu.kpi_Y },
+    { id: 'plain-lambda', fn: KPI_PLAIN_TEXT.lambda,  val: bu.kpi_lambda },
+    { id: 'plain-beta',   fn: KPI_PLAIN_TEXT.beta,    val: bu.kpi_beta_qr },
+    { id: 'plain-rho',    fn: KPI_PLAIN_TEXT.rho,     val: bu.kpi_rho },
+    { id: 'plain-P',      fn: KPI_PLAIN_TEXT.P,       val: bu.kpi_P },
+  ];
+  pairs.forEach(({ id, fn, val }) => {
+    const el = document.getElementById(id);
+    if (el && val !== undefined && val !== null) el.textContent = fn(val);
+  });
+}
+
+/* ─── KPI Cards ──────────────────────────────────────────────────────────── */
+function populateKpiCards(data, bu) {
+  if (!bu) return;
+  const gs = data.group_summary || data._stats || {};
+  const yMean   = gs.Y_caceis_2024        || 3.39;
+  const lMean   = gs.lambda_caceis_2024   || 44.6;
+  const rhoMean = (gs.rho_caceis_fr_2024 || 4.81) / 100;
+
+  const diffY = bu.kpi_Y - yMean;
+  const diffL = bu.kpi_lambda - lMean;
+  const diffR = (bu.kpi_rho * 100) - (gs.rho_caceis_fr_2024 || 4.81);
+
+  const map = [
+    { id: 'kpi-val-Y', val: bu.kpi_Y.toFixed(2) },
+    { id: 'kpi-val-L', val: bu.kpi_lambda.toFixed(0) },
+    { id: 'kpi-val-B', val: bu.kpi_beta_qr.toFixed(2) },
+    { id: 'kpi-val-P', val: (bu.kpi_P >= 0 ? '+' : '') + bu.kpi_P.toFixed(2) },
+    { id: 'kpi-val-R', val: (bu.kpi_rho * 100).toFixed(1) },
+    { id: 'kpi-diff-Y',
+      val: (diffY >= 0 ? '+' : '') + diffY.toFixed(2),
+      cls: diffY < 0 ? 'down' : 'up',
+      icon: diffY < 0 ? 'fa-arrow-down' : 'fa-arrow-up' },
+    { id: 'kpi-diff-L',
+      val: (diffL >= 0 ? '+' : '') + diffL.toFixed(0) + 'h',
+      cls: diffL >= 0 ? 'up' : 'down',
+      icon: diffL >= 0 ? 'fa-arrow-up' : 'fa-arrow-down' },
+    { id: 'kpi-diff-R',
+      val: (diffR >= 0 ? '+' : '') + diffR.toFixed(1) + 'pp',
+      cls: diffR > 0 ? 'down' : 'up',
+      icon: diffR > 0 ? 'fa-arrow-up' : 'fa-arrow-down' },
+  ];
+  map.forEach(({ id, val, cls, icon }) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (cls) {
+      el.className = 'diff ' + cls;
+      el.innerHTML = `<i class="fa-solid ${icon} fa-xs"></i> ${val}`;
+    } else {
+      el.textContent = val;
+    }
+  });
+  updatePlainText(bu);
+}
+
+/* ─── Comparison bars (from JSON) ───────────────────────────────────────── */
+function buildComparisonBars(data, bu) {
+  const container = document.getElementById('bar-list-container');
+  if (!container) return;
+
+  const pilot  = bu || data.business_units.find(b => b.is_pilot);
+  const gs     = data.group_summary || data._stats || {};
+  const sorted = [...data.business_units].sort((a, b) => a.rank - b.rank);
+
+  // Pilot + rank-1 + rank-2 + one mid-range BU + group avg
+  const mid = sorted[Math.floor(sorted.length / 2)];
+  const refs = [sorted[0], sorted[1], mid, pilot].filter(
+    (v, i, a) => v && a.findIndex(x => x.id === v.id) === i
+  );
+  const items = [
+    ...refs,
+    { id: '__group', name: 'CACEIS Group avg', kpi_Y: gs.Y_caceis_2024 || data._stats.Y_caceis_2024, _isGroup: true }
+  ].sort((a, b) => b.kpi_Y - a.kpi_Y);
+
+  const yMax = Math.max(...items.map(x => x.kpi_Y)) * 1.05;
+
+  const colorFor = item => {
+    if (item._isGroup)                       return { dot: 'var(--amber-l)', fill: 'amber', text: 'var(--amber-l)' };
+    if (pilot && item.id === pilot.id)       return { dot: 'var(--red-l)',   fill: 'red',   text: 'var(--red-l)'   };
+    if (item.rank <= 3)                      return { dot: 'var(--green-l)', fill: 'green', text: 'var(--green-l)' };
+    return { dot: 'var(--blue-l)', fill: 'purple', text: 'var(--blue-l)' };
+  };
+
+  container.innerHTML = items.map(item => {
+    const c   = colorFor(item);
+    const pct = ((item.kpi_Y / yMax) * 100).toFixed(1);
+    const lbl = (pilot && item.id === pilot.id && !item._isGroup) ? `${item.name} <span class="bar-you">YOU</span>` : item.name;
+    return `<div class="bar-item">
+      <div class="bar-meta">
+        <span class="bar-label"><span class="tbl-dot" style="background:${c.dot}"></span>${lbl}</span>
+        <span class="bar-val" style="color:${c.text}">${item.kpi_Y.toFixed(2)}</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill ${c.fill}" style="width:0" data-w="${pct}%"></div></div>
+    </div>`;
+  }).join('');
+
+  // Re-observe so animation fires on the freshly-rendered bars
+  const panel = container.closest('.panel');
+  if (panel) barObs.observe(panel);
+}
+
+/* ─── Comparison table (from JSON) ──────────────────────────────────────── */
+function buildComparisonTable(data, bu) {
+  const tbody = document.getElementById('comparison-tbody');
+  if (!tbody) return;
+
+  const pilot  = bu || data.business_units.find(b => b.is_pilot);
+  const gs     = data.group_summary || data._stats || {};
+  const sorted = [...data.business_units].sort((a, b) => a.rank - b.rank);
+
+  // Pilot + top 3 distinct BUs
+  const rows = [pilot, sorted[0], sorted[1], sorted[2]].filter(
+    (v, i, a) => v && a.findIndex(x => x.id === v.id) === i
+  );
+
+  const yMean  = gs.Y_caceis_2024 || data._stats.Y_caceis_2024;
+  const lMean  = gs.lambda_caceis_2024 || data._stats.lambda_caceis_2024;
+  const rhoRef = (gs.rho_caceis_fr_2024 || data._stats.rho_caceis_fr_2024) / 100;
+
+  const cy = v => v >= yMean + 0.1   ? 'var(--green-l)' : v <= yMean - 0.1  ? 'var(--red-l)'  : 'var(--amber-l)';
+  const cl = v => v >= lMean + 5     ? 'var(--green-l)' : v <= lMean - 5    ? 'var(--red-l)'  : 'var(--amber-l)';
+  const cr = v => v <= rhoRef - 0.005 ? 'var(--green-l)' : v >= rhoRef + 0.005 ? 'var(--red-l)' : 'var(--amber-l)';
+
+  const badge = row => {
+    if (pilot && row.id === pilot.id) return `<span class="tbl-you">Selected</span>`;
+    if (row.rank <= 3) return `<span style="font-size:10px;color:var(--green-l)">▲ Top</span>`;
+    return `<span style="font-size:10px;color:var(--amber-l)">→ Mid</span>`;
+  };
+
+  tbody.innerHTML = rows.map(row => `<tr>
+    <td>${(pilot && row.id === pilot.id) ? `<strong style="color:var(--white)">${row.name}</strong>` : row.name}</td>
+    <td style="color:${cy(row.kpi_Y)}">${row.kpi_Y.toFixed(2)}</td>
+    <td style="color:${cl(row.kpi_lambda)}">${Math.round(row.kpi_lambda)}h</td>
+    <td style="color:${cr(row.kpi_rho)}">${(row.kpi_rho * 100).toFixed(1)}%</td>
+    <td>${badge(row)}</td>
+  </tr>`).join('')
+  + `<tr><td>CACEIS Avg</td><td>${yMean ? yMean.toFixed(2) : '—'}</td><td>${lMean ? Math.round(lMean) + 'h' : '—'}</td>
+     <td>${rhoRef ? (rhoRef * 100).toFixed(1) + '%' : '—'}</td><td>—</td></tr>`;
+
+  // Update ρ insight pill with correct direction
+  if (pilot && rhoRef) {
+    const insightRow = document.getElementById('comparison-insight-row');
+    if (insightRow) {
+      const rhoBelowAvg = pilot.kpi_rho <= rhoRef;
+      const rhoClass    = rhoBelowAvg ? 'good' : 'alert';
+      const rhoIcon     = rhoBelowAvg ? 'fa-circle-check' : 'fa-circle-exclamation';
+      const rhoLabel    = rhoBelowAvg ? 'ρ below avg' : 'ρ above avg';
+      const yPill  = pilot.kpi_Y < (yMean - 0.1)
+        ? `<span class="insight-pill alert"><i class="fa-solid fa-circle-exclamation"></i> Y below avg</span>`
+        : `<span class="insight-pill good"><i class="fa-solid fa-circle-check"></i> Y on target</span>`;
+      const lPill  = pilot.kpi_lambda >= lMean
+        ? `<span class="insight-pill good"><i class="fa-solid fa-circle-check"></i> Top on λ training</span>`
+        : `<span class="insight-pill warn"><i class="fa-solid fa-triangle-exclamation"></i> λ below avg</span>`;
+      const rhoPill = `<span class="insight-pill ${rhoClass}"><i class="fa-solid ${rhoIcon}"></i> ${rhoLabel}</span>`;
+      insightRow.innerHTML = yPill + lPill + rhoPill;
+    }
+  }
+}
+
+/* ─── Levers (from JSON) ─────────────────────────────────────────────────── */
+function updateLevers(data, bu) {
+  const levers = data.recommendations && data.recommendations.pilot_bu_levers
+    ? data.recommendations.pilot_bu_levers
+    : [];
+
+  levers.forEach((lev, i) => {
+    const n = i + 1;
+    const descEl    = document.getElementById(`lever-${n}-desc`);
+    const summaryEl = document.getElementById(`lever-${n}-summary`);
+    if (descEl)    descEl.textContent    = lev.rationale || lev.programme || '—';
+    if (summaryEl) summaryEl.textContent = lev.kpi_target ? `${lev.kpi_target} — ${lev.rationale || ''}` : '—';
+  });
+}
+
+/* ─── BU Selector ────────────────────────────────────────────────────────── */
+function buildBUSelector(data) {
+  const sel = document.getElementById('bu-selector');
+  if (!sel) return;
+  const pilot = data.business_units.find(b => b.is_pilot);
+  const sorted = [...data.business_units].sort((a, b) => a.rank - b.rank);
+  sel.innerHTML = sorted.map(bu =>
+    `<option value="${bu.id}" ${bu === pilot ? 'selected' : ''}>${bu.name}${bu.is_pilot ? ' ★' : ''}</option>`
+  ).join('');
+}
+
+function onBuChange(buId) {
+  if (!KPI_DATA) return;
+  const bu = KPI_DATA.business_units.find(b => b.id === buId);
+  if (!bu) return;
+  populateKpiCards(KPI_DATA, bu);
+  buildComparisonBars(KPI_DATA, bu);
+  buildComparisonTable(KPI_DATA, bu);
+  updateLevers(KPI_DATA, bu);
+  updateMetaChips(KPI_DATA, bu);
+  resetLevers();
+  // Destroy and re-init charts with new BU
+  ['trendChart','radarChart','multiChart','absChart','compositeChart'].forEach(id => {
+    const canvas = document.getElementById(id);
+    if (canvas) {
+      const existing = Chart.getChart(canvas);
+      if (existing) existing.destroy();
+    }
+  });
+  initCharts(KPI_DATA, bu);
+}
+
+/* ─── Charts init (all data from JSON) ───────────────────────────────────── */
+function initCharts(data, bu) {
+  if (!bu) bu = data.business_units.find(b => b.is_pilot) || data.business_units[0];
+  const gs  = data.group_summary || data._stats || {};
+  const wts = (data.composite_index && data.composite_index.weights) || { Y:0.35, lambda:0.2, beta:0.25, P:0.1, rho:0.1 };
+
+  /* ── 1. Trend chart ─────────────────────────────────────────────────── */
+  (function() {
+    const ctx = document.getElementById('trendChart').getContext('2d');
+
+    const faPoints  = data.imr_series_finance_admin;
+    const grpPoints = data.imr_series_group.filter(d => d.Y_caceis !== null);
+    const lastFA    = faPoints[faPoints.length - 1];
+    const slope     = 0.015;
+
+    const startYear = 2021, endYear = 2030;
+    const labels = Array.from({ length: endYear - startYear + 1 }, (_, i) => String(startYear + i));
+    const histLen = faPoints.length;
+
+    const historical = labels.map(yr => { const p = faPoints.find(d => d.year === +yr); return p ? p.Y_fa : null; });
+    const projection = labels.map(yr => {
+      const n = +yr;
+      if (n < lastFA.year) return null;
+      if (n === lastFA.year) return lastFA.Y_fa;
+      return parseFloat((lastFA.Y_fa + slope * (n - lastFA.year)).toFixed(3));
+    });
+    const groupLine = labels.map(yr => { const p = grpPoints.find(d => d.year === +yr); return p ? p.Y_caceis : null; });
+
+    const gradP = ctx.createLinearGradient(0, 0, 600, 0);
+    gradP.addColorStop(0, 'rgba(168,160,255,0.7)');
+    gradP.addColorStop(1, 'rgba(92,217,192,0.4)');
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: `${bu.name} (Y)`, data: historical,
+            borderColor: PURPLE, backgroundColor: 'rgba(168,160,255,0.08)', borderWidth: 2.5,
+            pointRadius: labels.map((_, i) => historical[i] !== null ? (i === histLen - 1 ? 5 : 4) : 0),
+            pointBackgroundColor: PURPLE, fill: true, tension: 0.35, spanGaps: false },
+          { label: 'Projection (trend)', data: projection,
+            borderColor: gradP, borderWidth: 2, borderDash: [6, 4],
+            pointRadius: labels.map((_, i) => i >= histLen ? 4 : 0),
+            pointBackgroundColor: TEAL, fill: false, tension: 0.4, spanGaps: false },
+          { label: 'CACEIS Group avg', data: groupLine,
+            borderColor: AMBER, borderWidth: 1.5, borderDash: [3, 3],
+            pointRadius: 0, fill: false, tension: 0.3, spanGaps: true }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 12, padding: 16 } },
+          tooltip: {
+            backgroundColor: '#1a1a2e', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, padding: 12,
+            callbacks: { label: c => c.parsed.y !== null ? ` ${c.dataset.label}: ${c.parsed.y.toFixed(2)}` : '' }
+          }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { maxRotation: 0 } },
+          y: { min: 3.0, max: 4.0, grid: { color: 'rgba(255,255,255,0.05)' },
+               ticks: { stepSize: 0.2, callback: v => v.toFixed(1) } }
+        }
+      }
+    });
+  })();
+
+  /* ── 2. Radar chart ─────────────────────────────────────────────────── */
+  (function() {
+    const ctx  = document.getElementById('radarChart').getContext('2d');
+    const norm = (v, lo, hi) => Math.min(100, Math.max(0, ((v - lo) / (hi - lo)) * 100));
+    const rhoMax = 0.08;
+
+    const buS  = [
+      norm(bu.kpi_Y,        2.5, 5.0),   norm(bu.kpi_lambda,   0, 120),
+      norm(bu.kpi_beta_eae, 2.5, 5.0),   norm(bu.kpi_P, -0.05, 0.15),
+      norm(rhoMax - bu.kpi_rho, 0, rhoMax),
+    ];
+    const gsY   = gs.Y_caceis_2024        || data._stats.Y_caceis_2024;
+    const gsL   = gs.lambda_caceis_2024   || data._stats.lambda_caceis_2024;
+    const gsB   = gs.beta_eae_caceis_2024 || data._stats.beta_eae_caceis_2024;
+    const gsP   = gs.P_cagr_2022_2025     || data._stats.P_cagr_2022_2025;
+    const gsRho = (gs.rho_caceis_fr_2024  || data._stats.rho_caceis_fr_2024) / 100;
+    const grpS = [
+      norm(gsY, 2.5, 5.0),  norm(gsL, 0, 120),
+      norm(gsB, 2.5, 5.0),  norm(gsP, -0.05, 0.15),
+      norm(rhoMax - gsRho, 0, rhoMax),
+    ];
+
+    new Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels: ['Engagement\n(Y)', 'Training\n(λ)', 'Performance\n(β)', 'Productivity\n(P)', 'Absenteeism\n(ρ inv.)'],
+        datasets: [
+          { label: bu.name, data: buS, borderColor: PURPLE, backgroundColor: 'rgba(168,160,255,0.12)',
+            borderWidth: 2, pointBackgroundColor: PURPLE, pointRadius: 4 },
+          { label: 'CACEIS Group', data: grpS, borderColor: AMBER, backgroundColor: 'rgba(240,181,69,0.07)',
+            borderWidth: 1.5, borderDash: [4, 3], pointBackgroundColor: AMBER, pointRadius: 3 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 10, padding: 12 } },
+          tooltip: {
+            backgroundColor: '#1a1a2e', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1,
+            callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.r.toFixed(1)}` }
+          }
+        },
+        scales: {
+          r: { min: 0, max: 100,
+               grid: { color: 'rgba(255,255,255,0.07)' }, angleLines: { color: 'rgba(255,255,255,0.07)' },
+               pointLabels: { font: { size: 10 }, color: MUTED }, ticks: { display: false, stepSize: 25 } }
+        }
+      }
+    });
+  })();
+
+  /* ── 3. Multi-KPI: BU vs Group normalised (2024) ────────────────────── */
+  (function() {
+    const ctx    = document.getElementById('multiChart').getContext('2d');
+    const _gsY   = gs.Y_caceis_2024        || data._stats.Y_caceis_2024;
+    const _gsL   = gs.lambda_caceis_2024   || data._stats.lambda_caceis_2024;
+    const _gsB   = gs.beta_eae_caceis_2024 || data._stats.beta_eae_caceis_2024;
+    const _gsRho = (gs.rho_caceis_fr_2024  || data._stats.rho_caceis_fr_2024) / 100;
+    const buVals = [
+      bu.kpi_Y        / _gsY   * 100,
+      bu.kpi_lambda   / _gsL   * 100,
+      bu.kpi_beta_eae / _gsB   * 100,
+      100,   // P identical across BUs
+      (1 - bu.kpi_rho) / (1 - _gsRho) * 100,
+    ].map(v => parseFloat(v.toFixed(1)));
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Y — Engagement', 'λ — Training', 'β — Performance', 'P — Productivity', 'ρ — Abs. (inv.)'],
+        datasets: [
+          { label: bu.name, data: buVals,
+            backgroundColor: 'rgba(168,160,255,0.5)', borderColor: PURPLE, borderWidth: 1, borderRadius: 5 },
+          { label: 'CACEIS Group (=100)', data: [100, 100, 100, 100, 100],
+            backgroundColor: 'rgba(240,181,69,0.3)', borderColor: AMBER, borderWidth: 1, borderRadius: 5 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 10, padding: 14 } },
+          tooltip: {
+            backgroundColor: '#1a1a2e', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1,
+            callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y.toFixed(1)}% of group avg` }
+          }
+        },
+        scales: {
+          x: { grid: { display: false } },
+          y: { min: 0, max: 140, grid: { color: 'rgba(255,255,255,0.05)' },
+               ticks: { callback: v => v + '%' } }
+        }
+      }
+    });
+  })();
+
+  /* ── 4. Absenteeism monthly ─────────────────────────────────────────── */
+  (function() {
+    const ctx     = document.getElementById('absChart').getContext('2d');
+    const months  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const absData = (data.absenteeism_fr_monthly_2024 || []).map(d => parseFloat((d.rate * 100).toFixed(2)));
+    const rhoRef  = gs.rho_caceis_fr_2024 || data._stats.rho_caceis_fr_2024;
+
+    const colors = absData.map(v =>
+      v >= rhoRef + 0.3 ? 'rgba(240,112,112,0.7)' :
+      v >= rhoRef - 0.2 ? 'rgba(240,181,69,0.65)' :
+                          'rgba(86,212,135,0.55)'
+    );
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: months,
+        datasets: [
+          { label: 'Absenteeism rate (%)', data: absData,
+            backgroundColor: colors, borderRadius: 6, borderSkipped: false },
+          { label: `CACEIS avg ${rhoRef.toFixed(2)}%`, data: Array(12).fill(rhoRef),
+            type: 'line', borderColor: AMBER, borderWidth: 1.5, borderDash: [4, 3],
+            pointRadius: 0, fill: false }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 10, padding: 14 } },
+          tooltip: {
+            backgroundColor: '#1a1a2e', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1,
+            callbacks: { label: c => ` ${c.parsed.y.toFixed(2)}%` }
+          }
+        },
+        scales: {
+          x: { grid: { display: false } },
+          y: { min: 0, max: 6, grid: { color: 'rgba(255,255,255,0.05)' },
+               ticks: { callback: v => v + '%' } }
+        }
+      }
+    });
+  })();
+
+  /* ── 5. Composite doughnut ──────────────────────────────────────────── */
+  (function() {
+    const ctx  = document.getElementById('compositeChart').getContext('2d');
+    const yC   = (bu.kpi_Y / 5)                       * wts.Y      * 100;
+    const lC   = (Math.min(bu.kpi_lambda, 100) / 100) * wts.lambda * 100;
+    const bC   = (bu.kpi_beta_eae / 5)                * wts.beta   * 100;
+    const pC   = Math.max(0, bu.kpi_P + 0.5)          * wts.P      * 100;
+    const rhoC = (1 - bu.kpi_rho)                     * wts.rho    * 100;
+
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: [
+          `Engagement Y×${wts.Y}`, `Training λ×${wts.lambda}`,
+          `Performance β×${wts.beta}`, `Productivity P×${wts.P}`,
+          `Absenteeism ρ×${wts.rho}`
+        ],
+        datasets: [{
+          data: [yC, lC, bC, pC, rhoC],
+          backgroundColor: [
+            'rgba(168,160,255,0.75)', 'rgba(92,217,192,0.75)',
+            'rgba(240,181,69,0.75)',  'rgba(106,176,245,0.75)',
+            'rgba(240,128,128,0.75)',
+          ],
+          borderColor: '#0d0d14', borderWidth: 3, hoverOffset: 8,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '65%',
+        plugins: {
+          legend: { position: 'right', labels: { boxWidth: 12, padding: 10, font: { size: 11 } } },
+          tooltip: {
+            backgroundColor: '#1a1a2e', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1,
+            callbacks: { label: c => ` ${c.label}: ${c.parsed.toFixed(1)}pts` }
+          }
+        }
+      }
+    });
+  })();
+}
+
+
+/* ─── Onboarding Tour ────────────────────────────────────────────────────── */
+const TOUR_STEPS = {
+  1: [
+    { target: null,
+      title: 'Bienvenue — Vue Chief Officer',
+      body: 'Accès complet déverrouillé. Ce tour de 90 secondes couvre les 6 sections du dashboard. Utilisez les boutons T1/T2/T3 en haut à droite pour simuler les vues des autres rôles.',
+      badge: 'Tier 1 · Chief Officer' },
+    { target: '#scorecard',
+      title: 'Tableau de bord KPI',
+      body: 'Cinq indicateurs définissent la santé du capital humain de Finance & Admin. Vert = au-dessus de la moyenne CACEIS, Rouge = en dessous. Chaque carte affiche l\'intervalle de confiance à 95%.',
+      badge: 'Tier 1 · KPI Scorecard' },
+    { target: '#comparison',
+      title: 'Benchmark BU',
+      body: 'Finance & Admin est classée 18ème/21 sur l\'engagement (Y). Le graphique en barres compare les entités de référence. Le tableau croise Y, λ et ρ pour identifier les BUs leaders.',
+      badge: 'Tier 1 · Comparison' },
+    { target: '#levers',
+      title: 'Leviers d\'action',
+      body: '3 interventions fondées sur les données, chacune avec un impact financier estimé entre 0,4M€ et 1,5M€. Dérivées de 3 477 évaluations EAE et de l\'analyse IMR 2021–2024.',
+      badge: 'Tier 1 · Action Levers' },
+    { target: '#trend',
+      title: 'Tendances & Projection',
+      body: 'L\'historique IMR 2021–2024 est tracé avec une projection de recovery à +0.015pt/an. La ligne ambre représente la moyenne groupe CACEIS.',
+      badge: 'Tier 1 · Trend' },
+    { target: '#section-composite',
+      title: 'Indice V_HC Composite',
+      body: 'Le graphique en anneau décompose le score V_HC (0,4442/1,0) selon les 5 dimensions, avec les poids issus d\'une ACP. Finance & Admin est 18ème sur 21 BUs.',
+      badge: 'Tier 1 · V_HC Index' },
+  ],
+  2: [
+    { target: null,
+      title: 'Vue BU Leadership',
+      body: 'Accès agrégé au niveau BU. Les recommandations sont résumées. L\'analyse détaillée, les projections de tendance et l\'indice composite sont disponibles en Tier 1.',
+      badge: 'Tier 2 · BU Leadership' },
+    { target: '#scorecard',
+      title: 'Vos 5 KPIs',
+      body: 'Y=3.28 signifie que l\'engagement est sous la moyenne CACEIS (3.39). ρ=3.2% d\'absentéisme dépasse la moyenne groupe de 0.6pp, représentant ~850 jours perdus en excès/an.',
+      badge: 'Tier 2 · KPI Scorecard' },
+    { target: '#comparison',
+      title: 'Classement BU',
+      body: 'Finance & Admin est 18ème/21. Coverage France (rang 4, Y=3.67) est le benchmark naturel. Identifiez ce qui différencie les BUs leaders de votre position actuelle.',
+      badge: 'Tier 2 · Benchmark' },
+    { target: '#levers',
+      title: 'Vos recommandations',
+      body: '3 leviers prioritaires pour votre BU. Chaque levier inclut un résumé de l\'action recommandée et son impact estimé. Contactez votre HR BP pour initier le plan d\'action.',
+      badge: 'Tier 2 · Levers' },
+  ],
+  3: [
+    { target: null,
+      title: 'Vue Manager Opérationnel',
+      body: 'Accès simplifié aux indicateurs clés de Finance & Admin. Aucune donnée individuelle n\'est exposée — toutes les métriques sont agrégées au niveau BU.',
+      badge: 'Tier 3 · Ops Manager' },
+    { target: '#scorecard',
+      title: 'Vos indicateurs',
+      body: '5 métriques résument la santé RH de votre équipe. Vert = au-dessus de la moyenne CACEIS. Y=3.28 et ρ=3.2% sont les deux indicateurs sous surveillance prioritaire.',
+      badge: 'Tier 3 · KPI Scorecard' },
+    { target: null,
+      title: 'Prochaines étapes',
+      body: '3 plans d\'action ont été identifiés par l\'équipe RH pour votre BU. Référencez-les comme Leviers 01, 02 et 03 auprès de votre HR Business Partner pour initier les interventions.',
+      badge: 'Tier 3 · Next Steps' },
+  ],
+};
+
+let tourStep   = 0;
+let tourTierID = 1;
+
+function elVisible(sel) {
+  if (!sel) return true;
+  const el = document.querySelector(sel);
+  if (!el) return false;
+  const s = window.getComputedStyle(el);
+  return s.display !== 'none' && s.visibility !== 'hidden' && el.offsetParent !== null;
+}
+
+function startTour(tier) {
+  tourTierID = tier || currentTier;
+  tourStep   = 0;
+  renderTourStep();
+}
+
+function renderTourStep() {
+  const steps = TOUR_STEPS[tourTierID];
+  if (!steps || tourStep >= steps.length) { endTour(); return; }
+
+  const step     = steps[tourStep];
+  const backdrop = document.getElementById('tour-backdrop');
+  const spotlight= document.getElementById('tour-spotlight');
+  const panel    = document.getElementById('tour-panel');
+
+  // Skip if section is hidden (e.g. T3 hides comparison/levers)
+  if (step.target && !elVisible(step.target)) { tourStep++; renderTourStep(); return; }
+
+  // Show elements
+  backdrop.style.display  = 'block';
+  panel.style.display     = 'block';
+  panel.style.transform   = '';
+  panel.classList.remove('centered');
+
+  // Badge
+  const badgeEl = document.getElementById('tour-tier-badge');
+  badgeEl.textContent  = step.badge;
+  badgeEl.className    = 'tour-tier-badge tb' + tourTierID;
+
+  // Counter
+  document.getElementById('tour-counter').textContent =
+    'Étape ' + (tourStep + 1) + ' sur ' + steps.length;
+
+  // Progress dots
+  const prog = document.getElementById('tour-progress');
+  prog.innerHTML = steps.map((_,i) =>
+    `<div class="tour-dot ${i < tourStep ? 'done' : i === tourStep ? 'active' : ''}"></div>`
+  ).join('');
+
+  // Content
+  document.getElementById('tour-title').textContent = step.title;
+  document.getElementById('tour-body').textContent  = step.body;
+  document.getElementById('tour-next-btn').textContent =
+    tourStep === steps.length - 1 ? 'Terminer ✓' : 'Suivant →';
+
+  // Position
+  if (step.target) {
+    spotlight.style.display = 'block';
+    const el = document.querySelector(step.target);
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    setTimeout(() => positionTour(el), 420);
+    // Re-position once scroll has fully settled
+    setTimeout(() => positionTour(el), 700);
+  } else {
+    spotlight.style.display = 'none';
+    panel.classList.add('centered');
+  }
+}
+
+function positionTour(el) {
+  const spotlight = document.getElementById('tour-spotlight');
+  const panel     = document.getElementById('tour-panel');
+  const pad = 10;
+  const r   = el.getBoundingClientRect();
+
+  spotlight.style.top    = (r.top  - pad) + 'px';
+  spotlight.style.left   = (r.left - pad) + 'px';
+  spotlight.style.width  = (r.width  + pad * 2) + 'px';
+  spotlight.style.height = (r.height + pad * 2) + 'px';
+
+  // Measure actual rendered panel dimensions
+  const pw = panel.offsetWidth  || 320;
+  const ph = panel.offsetHeight || 280;
+  const margin = 16;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
+  // For very tall targets (e.g. full sections), use a fixed vertical anchor
+  // so the panel doesn't get pushed off screen
+  const targetTooTall = r.height > vh * 0.5;
+  const midY = targetTooTall
+    ? Math.min(r.top + 80, vh / 2 - ph / 2)   // anchor near top of section
+    : r.top + r.height / 2 - ph / 2;
+
+  let top, left;
+
+  // Prefer: right side of element
+  if (r.right + pw + margin < vw) {
+    left = r.right + margin;
+    top  = midY;
+  // Then: left side of element
+  } else if (r.left - pw - margin > 0) {
+    left = r.left - pw - margin;
+    top  = midY;
+  // Fallback: below element (or above if no room below)
+  } else if (r.bottom + ph + margin < vh) {
+    left = Math.max(margin, Math.min(r.left + r.width / 2 - pw / 2, vw - pw - margin));
+    top  = r.bottom + margin;
+  } else {
+    left = Math.max(margin, Math.min(r.left + r.width / 2 - pw / 2, vw - pw - margin));
+    top  = Math.max(margin, r.top - ph - margin);
+  }
+
+  // Final clamp: keep fully inside viewport
+  panel.style.top  = Math.max(margin, Math.min(top,  vh - ph - margin)) + 'px';
+  panel.style.left = Math.max(margin, Math.min(left, vw - pw - margin)) + 'px';
+}
+
+function nextTourStep() {
+  tourStep++;
+  renderTourStep();
+}
+
+function endTour() {
+  document.getElementById('tour-backdrop').style.display  = 'none';
+  document.getElementById('tour-spotlight').style.display = 'none';
+  document.getElementById('tour-panel').style.display     = 'none';
+  localStorage.setItem('hcv_tour_t' + tourTierID, 'done');
+}
+
+/* ─── RAG Chat Panel ─────────────────────────────────────────────────────── */
+const RAG_API_BASE = 'http://localhost:8000';
+
+function openRagPanel() {
+  const panel = document.getElementById('rag-panel');
+  const fab   = document.getElementById('rag-fab-btn');
+  panel.classList.remove('hidden');
+  if (fab) fab.classList.add('open');
+  document.getElementById('rag-input').focus();
+}
+
+function closeRagPanel() {
+  const panel = document.getElementById('rag-panel');
+  const fab   = document.getElementById('rag-fab-btn');
+  panel.classList.add('hidden');
+  if (fab) fab.classList.remove('open');
+}
+
+function ragAppendMsg(role, html) {
+  const container = document.getElementById('rag-messages');
+  const div = document.createElement('div');
+  div.className = 'rag-msg ' + role;
+  div.innerHTML = '<div class="rag-bubble">' + html + '</div>';
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  return div;
+}
+
+function ragShowTyping() {
+  const container = document.getElementById('rag-messages');
+  const div = document.createElement('div');
+  div.className = 'rag-msg assistant';
+  div.id = 'rag-typing-indicator';
+  div.innerHTML = '<div class="rag-bubble"><div class="rag-typing"><span></span><span></span><span></span></div></div>';
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function ragRemoveTyping() {
+  const el = document.getElementById('rag-typing-indicator');
+  if (el) el.remove();
+}
+
+function ragFormatAnswer(text) {
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\[Source:\s*([^\]]+)\]/g,'<span style="font-size:11px;color:var(--blue-l);opacity:0.8">[Source: $1]</span>')
+    .replace(/\n/g,'<br>');
+}
+
+/* ─── Explain mode — prompts & helpers ───────────────────────────────────── */
+
+const EXPLAIN_PROMPTS = (() => {
+  const SYSTEM_EXPLAIN =
+    'Tu es un assistant RH CACEIS. ' +
+    'Réponds uniquement en langage simple et accessible. ' +
+    'Règles strictes : maximum 3 phrases courtes, ' +
+    'commence par \'Concrètement,\', zéro jargon technique, ' +
+    'zéro acronyme, zéro source citée, zéro mise en garde, ' +
+    'zéro titre ou sous-titre. ' +
+    'Réponds directement, rien d\'autre.\n' +
+    '---\n';
+
+  return {
+    Y: (val, buName) =>
+      SYSTEM_EXPLAIN +
+      `Concrètement, qu'est-ce que ça veut dire pour une équipe d'avoir un score d'engagement de ${val}/5 sur une échelle de 1 à 5, sachant que la moyenne CACEIS est 3,40 ? Explique en 2-3 phrases simples sans chercher ce chiffre dans des documents.`,
+
+    lambda: (val, buName) =>
+      SYSTEM_EXPLAIN +
+      `Concrètement, qu'est-ce que ça veut dire pour une équipe d'avoir ${val} heures de formation par employé et par an, sachant que la moyenne CACEIS est 44,6 heures ? Explique en 2-3 phrases simples sans chercher ce chiffre dans des documents.`,
+
+    beta: (val, buName) =>
+      SYSTEM_EXPLAIN +
+      `Concrètement, qu'est-ce que ça veut dire d'avoir un score de qualité de formation de ${val}/5 sur une échelle de 1 à 5, sachant que la moyenne CACEIS est 3,40 ? Explique en 2-3 phrases simples sans chercher ce chiffre dans des documents.`,
+
+    rho: (val, buName) =>
+      SYSTEM_EXPLAIN +
+      `Concrètement, qu'est-ce que ça veut dire d'avoir un taux d'absentéisme de ${val}, sachant que la moyenne CACEIS est 4,8% ? Explique en 2-3 phrases simples sans chercher ce chiffre dans des documents.`,
+
+    P: (val, buName) =>
+      SYSTEM_EXPLAIN +
+      `Concrètement, qu'est-ce que ça veut dire d'avoir un indicateur de productivité (CAGR NBI/FTE) de ${val} ? Explique en 2-3 phrases simples ce que ce chiffre signifie pour une équipe, sans chercher ce chiffre dans des documents.`,
+
+    action: (titre, kpi, buName) =>
+      SYSTEM_EXPLAIN +
+      `Concrètement, pourquoi l'action "${titre}" est-elle pertinente pour améliorer le KPI ${kpi} d'une BU ? Explique en 2-3 phrases simples les bénéfices attendus pour les équipes, sans chercher dans des documents.`,
+  };
+})();
+
+let _ragModeTimer = null;
+
+function ragSetMode(mode) {
+  // mode: 'expert' | 'explain'
+  const badge = document.getElementById('rag-mode-badge');
+  if (!badge) return;
+  if (_ragModeTimer) { clearTimeout(_ragModeTimer); _ragModeTimer = null; }
+  if (mode === 'expert') {
+    badge.innerHTML = '<i class="fa-solid fa-magnifying-glass fa-xs"></i> Mode expert';
+    badge.className = 'rag-mode-badge';
+    badge.style.display = 'inline-flex';
+    _ragModeTimer = setTimeout(() => { badge.style.display = 'none'; }, 5000);
+  } else if (mode === 'explain') {
+    badge.innerHTML = '<i class="fa-solid fa-lightbulb fa-xs"></i> Mode simplifié';
+    badge.className = 'rag-mode-badge explain';
+    badge.style.display = 'inline-flex';
+    _ragModeTimer = setTimeout(() => { badge.style.display = 'none'; }, 5000);
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+async function ragSendExplain(fullPrompt, notifHtml, hideSources = true) {
+  openRagPanel();
+  if (notifHtml) {
+    ragAppendMsg('assistant',
+      '<div style="font-size:10px;color:var(--amber-l);margin-bottom:4px;">' + notifHtml + '</div>');
+  }
+  ragAppendMsg('user', ragFormatAnswer(fullPrompt.replace(/^\[INSTRUCTION[^\]]*\]\n\n/, '').split('\n')[0]));
+  ragShowTyping();
+  const sendBtn = document.getElementById('rag-send');
+  if (sendBtn) sendBtn.disabled = true;
+  try {
+    const res = await fetch(RAG_API_BASE + '/api/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: fullPrompt, top_k: 5 }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    ragRemoveTyping();
+    let html = ragFormatAnswer(data.answer || 'Pas de réponse.');
+    if (!hideSources && data.sources && data.sources.length) {
+      html += '<div style="margin-top:8px;font-size:10px;color:var(--muted)">Sources : ' +
+        data.sources.map(s => '<span style="color:var(--blue-l)">' + s + '</span>').join(', ') + '</div>';
+    }
+    ragAppendMsg('assistant', html);
+  } catch(e) {
+    ragRemoveTyping();
+    ragAppendMsg('assistant',
+      '<span style="color:var(--coral-l)"><i class="fa-solid fa-triangle-exclamation"></i> ' +
+      'API indisponible. Lancez <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px">python3 rag/api.py</code> puis réessayez.</span>');
+  }
+  if (sendBtn) sendBtn.disabled = false;
+  document.getElementById('rag-input').focus();
+}
+
+function explainKpi(kpi) {
+  const buName = getCurrentBuName() || 'cette BU';
+  let val = '—';
+  if (KPI_DATA) {
+    const sel = document.getElementById('bu-selector');
+    const bu  = sel ? KPI_DATA.business_units.find(b => b.id === sel.value) : null;
+    if (bu) {
+      if (kpi === 'Y')      val = (bu.kpi_Y      !== undefined) ? bu.kpi_Y.toFixed(2)      : '—';
+      if (kpi === 'lambda') val = (bu.kpi_lambda  !== undefined) ? bu.kpi_lambda.toFixed(1)  : '—';
+      if (kpi === 'beta')   val = (bu.kpi_beta_qr !== undefined) ? bu.kpi_beta_qr.toFixed(2) : '—';
+      if (kpi === 'rho')    val = (bu.kpi_rho     !== undefined) ? (bu.kpi_rho * 100).toFixed(1) + '%' : '—';
+      if (kpi === 'P')      val = (bu.kpi_P       !== undefined) ? bu.kpi_P.toFixed(3)       : '—';
+    }
+  }
+  const builder = EXPLAIN_PROMPTS[kpi];
+  if (!builder) return;
+  ragSetMode('explain');
+  ragSendExplain(builder(val, buName), null);
+}
+
+async function sendRagMessage() {
+  const input = document.getElementById('rag-input');
+  const question = input.value.trim();
+  if (!question) return;
+
+  ragSetMode('expert');
+  input.value = '';
+  document.getElementById('rag-send').disabled = true;
+
+  ragAppendMsg('user', ragFormatAnswer(question));
+  ragShowTyping();
+
+  try {
+    const res = await fetch(RAG_API_BASE + '/api/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, top_k: 5 }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    ragRemoveTyping();
+
+    let html = ragFormatAnswer(data.answer || 'Pas de réponse.');
+    if (data.sources && data.sources.length) {
+      html += '<div style="margin-top:8px;font-size:10px;color:var(--muted)">Sources : ' +
+        data.sources.map(s => '<span style="color:var(--blue-l)">' + s + '</span>').join(', ') + '</div>';
+    }
+    ragAppendMsg('assistant', html);
+  } catch(e) {
+    ragRemoveTyping();
+    ragAppendMsg('assistant',
+      '<span style="color:var(--coral-l)"><i class="fa-solid fa-triangle-exclamation"></i> ' +
+      'API indisponible. Lancez <code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px">python3 rag/api.py</code> puis réessayez.</span>');
+  }
+
+  document.getElementById('rag-send').disabled = false;
+  document.getElementById('rag-input').focus();
+}
+
+function ragShortcut(text) {
+  document.getElementById('rag-input').value = text;
+  sendRagMessage();
+}
+
+// Check API status on load
+(async function checkRagApi() {
+  const badge = document.getElementById('rag-status-badge');
+  if (!badge) return;
+  try {
+    const res = await fetch(RAG_API_BASE + '/api/status', { signal: AbortSignal.timeout(3000) });
+    if (res.ok) {
+      const d = await res.json();
+      badge.textContent = '● ' + d.chunks_total + ' chunks';
+      badge.style.color = 'var(--green-l)';
+    } else throw new Error();
+  } catch {
+    badge.textContent = '● hors-ligne';
+    badge.classList.add('offline');
+  }
+})();
+
+/* ─── Action Levers — RAG Integration ───────────────────────────────────── */
+const RAG_BASE = 'http://localhost:8000';
+let _currentLeversScorecard = null;
+
+function getCurrentBuName() {
+  if (!KPI_DATA) return null;
+  const sel = document.getElementById('bu-selector');
+  if (!sel) return null;
+  const bu = KPI_DATA.business_units.find(b => b.id === sel.value);
+  return bu ? bu.name : null;
+}
+
+async function generateLevers() {
+  const buName = getCurrentBuName();
+  if (!buName) { toast('Sélectionnez une BU'); return; }
+
+  const btn     = document.getElementById('btn-generate-levers');
+  const loading = document.getElementById('levers-loading');
+  const empty   = document.getElementById('levers-empty');
+  const content = document.getElementById('levers-content');
+
+  btn.disabled = true;
+  btn.innerHTML = '<div style="width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;"></div> Appel Claude…';
+  loading.style.display = 'block';
+  empty.style.display   = 'none';
+  content.style.display = 'none';
+
+  try {
+    const res = await fetch(`${RAG_BASE}/api/scorecard/${encodeURIComponent(buName)}`, {
+      signal: AbortSignal.timeout(45000)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const sc = await res.json();
+    _currentLeversScorecard = sc;
+
+    loading.style.display = 'none';
+    content.style.display = 'block';
+    renderLevers(sc, buName);
+
+    const titleEl = document.getElementById('levers-section-title');
+    if (titleEl) titleEl.textContent = `Plan d'action — ${buName}`;
+
+    const confColor = sc.confidence === 'haute' ? 'var(--green-l)' : sc.confidence === 'faible' ? 'var(--coral-l)' : 'var(--amber-l)';
+    btn.innerHTML = `<i class="fa-solid fa-rotate-right"></i> Regénérer`;
+    toast(`Scorecard généré — ${buName} · confiance <span style="color:${confColor};font-weight:700">${sc.confidence}</span>`);
+
+  } catch(e) {
+    loading.style.display = 'none';
+    empty.style.display   = 'block';
+    toast('Erreur API scorecard : ' + e.message);
+    btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Générer les recommandations';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function resetLevers() {
+  _currentLeversScorecard = null;
+  document.getElementById('levers-loading').style.display = 'none';
+  document.getElementById('levers-empty').style.display   = 'block';
+  document.getElementById('levers-content').style.display = 'none';
+  const btn = document.getElementById('btn-generate-levers');
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Générer les recommandations'; }
+  const titleEl = document.getElementById('levers-section-title');
+  if (titleEl) titleEl.textContent = 'AI-powered action plan';
+}
+
+const _KPI_LABEL = { 'Y':'Engagement', '\u03BB':'Formation', '\u03B2':'QVCT', '\u03C1':'Absentéisme' };
+const _PRI_COLOR = { haute:'var(--coral-l)', moyenne:'var(--amber-l)', faible:'var(--teal-l)' };
+const _KPI_STYLE = {
+  'Y':       { bg:'rgba(168,160,255,0.25)', color:'var(--purple-l)' },
+  '\u03BB':  { bg:'rgba(92,217,192,0.25)',  color:'var(--teal-l)' },
+  '\u03B2':  { bg:'rgba(240,181,69,0.25)',  color:'var(--amber-l)' },
+  '\u03C1':  { bg:'rgba(240,112,112,0.25)', color:'var(--coral-l)' },
+  'career':  { bg:'rgba(168,160,255,0.18)', color:'var(--purple-l)' },
+};
+function _kpiBadge(kpi) {
+  const s = _KPI_STYLE[kpi] || _KPI_STYLE['Y'];
+  return `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;font-size:11px;font-weight:800;background:${s.bg};color:${s.color};">${_esc(kpi)}</span>`;
+}
+
+// Rank badge colors: 0=top (coral), 1=mid (amber), 2+=low (muted)
+const _RANK_BADGE = [
+  { label: 'Priorité 1', color: 'var(--coral-l)',  border: 'rgba(240,112,112,0.4)' },
+  { label: 'Priorité 2', color: 'var(--amber-l)',  border: 'rgba(240,181,69,0.4)' },
+  { label: 'Priorité 3', color: 'var(--muted)',     border: 'rgba(136,136,168,0.3)' },
+];
+
+function scoreLever(lever, kpiRaw) {
+  let score = 0;
+  // Normalize kpi key (unicode or string)
+  const raw = lever.kpi_impacted || '';
+  const kpi = raw === '\u03B2' || raw === 'β' ? 'beta'
+            : raw === '\u03C1' || raw === 'ρ' ? 'rho'
+            : raw === '\u03BB' || raw === 'λ' ? 'lambda'
+            : raw;
+
+  if (kpi === 'Y') {
+    const gap = 3.40 - (kpiRaw.Y || 3.40);
+    score += gap * 10;
+  }
+  if (kpi === 'beta') {
+    const gap = 4.40 - (kpiRaw.beta || 4.40);
+    score += gap * 8;
+  }
+  if (kpi === 'rho') {
+    const gap = (kpiRaw.rho || 0) - 0.048;
+    score += gap * 100;
+  }
+  // Délai d'effet — plus court = plus prioritaire
+  const delai = lever.delai_effet || '';
+  if (delai.includes('1-3'))  score += 3;
+  if (delai.includes('3-6'))  score += 2;
+  if (delai.includes('6-12')) score += 1;
+  // Career development légèrement moins urgent
+  if (lever.career_development) score -= 1;
+
+  return score;
+}
+
+function _esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function _escAttr(s) {
+  if (s == null) return '';
+  return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+}
+
+function renderLevers(sc, buName) {
+  const al      = sc.action_library || {};
+  const content = document.getElementById('levers-content');
+  let html = '';
+
+  // P message
+  if (al.p_message) {
+    html += `<div class="levers-p-banner">
+      <i class="fa-solid fa-circle-info" style="flex-shrink:0;margin-top:2px;"></i>
+      <div><strong>Productivité (P)</strong> — ${_esc(al.p_message)}</div>
+    </div>`;
+  }
+
+  // Career dev banner
+  if (al.career_dev_triggered) {
+    html += `<div class="levers-career-banner">
+      <i class="fa-solid fa-seedling" style="flex-shrink:0;margin-top:2px;"></i>
+      <div><strong>Pattern Career Development détecté</strong> — Y &lt; 3.40 et λ ≥ moyenne groupe.
+      Le problème est la trajectoire perçue, pas le volume de formation.</div>
+    </div>`;
+  }
+
+  // ── AI Recommendations ────────────────────────────────────────
+  const recsRaw  = sc.recommendations || [];
+  const kpiRaw   = sc.kpi_raw || {};
+  // Get full BU object for LEVER_SCORER (needs kpi_Y, kpi_beta_qr etc.)
+  const _buSel  = document.getElementById('bu-selector');
+  const _buData = (_buSel && KPI_DATA)
+    ? (KPI_DATA.business_units.find(b => b.id === _buSel.value) || null)
+    : null;
+  // Sort by LEVER_SCORER if BU data available, else fallback to scoreLever
+  const recs = [...recsRaw].sort((a, b) =>
+    _buData
+      ? LEVER_SCORER.total(b, _buData) - LEVER_SCORER.total(a, _buData)
+      : scoreLever(b, kpiRaw) - scoreLever(a, kpiRaw)
+  );
+
+  if (recs.length > 0) {
+    const confColor = sc.confidence === 'haute' ? 'var(--green-l)' : sc.confidence === 'faible' ? 'var(--coral-l)' : 'var(--amber-l)';
+    html += `<div class="levers-sub-label">
+      <i class="fa-solid fa-robot"></i> Recommandations IA
+      <span style="margin-left:auto;text-transform:none;letter-spacing:0;font-size:11px;color:${confColor};">Confiance : ${_esc(sc.confidence)}</span>
+    </div>`;
+
+    recs.forEach((r, i) => {
+      const rankN     = i + 1;
+      const rankClass = 'rank-' + Math.min(rankN, 3);
+      const actionIds = (r.action_ids || []).map(id => `<span class="act-id-chip">${id}</span>`).join('');
+      const brief     = _esc((r.description || '').slice(0, 130)) + ((r.description||'').length > 130 ? '…' : '');
+      html += `<div class="lever reveal">
+        <div class="lever-head">
+          <span class="lever-num">Levier ${rankN}&nbsp;&middot;&nbsp;${_esc(r.kpi_impacted||'')}</span>
+          <span class="lever-rank-badge ${rankClass}">Priorité ${rankN}</span>
+        </div>
+        <div class="lever-title">${_esc(r.lever)}</div>
+        <p class="lever-summary-text" style="display:none">${brief}</p>
+        <div class="lever-detail">
+          <div class="lever-desc">${_esc(r.description)}</div>
+          ${r.estimated_impact ? `<div class="lever-timing"><i class="fa-regular fa-chart-bar fa-xs"></i> Impact : ${_esc(r.estimated_impact)}</div>` : ''}
+          ${actionIds ? `<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;">${actionIds}</div>` : ''}
+          <div class="lever-source" style="margin-top:10px;"><i class="fa-solid fa-book-open"></i><span>${_esc(r.source||'—')}</span></div>
+        </div>
+      </div>`;
+    });
+  }
+
+  // ── Action library grouped by KPI ────────────────────────────
+  const actionsByKpi = al.actions_by_kpi || {};
+  const kpiOrder     = ['Y','\u03BB','\u03B2','\u03C1'];
+  const hasActions   = kpiOrder.some(k => (actionsByKpi[k]||[]).length > 0);
+
+  if (hasActions) {
+    html += `<div class="levers-sub-label" style="margin-top:28px;">
+      <i class="fa-solid fa-list-check"></i> Actions bibliothèque CACEIS
+    </div>`;
+    kpiOrder.forEach(kpi => {
+      const actions = actionsByKpi[kpi] || [];
+      if (!actions.length) return;
+      const gapNote  = (al.gap_notes || {})[kpi];
+      const kpiLabel = _KPI_LABEL[kpi] || kpi;
+      const ready    = actions.filter(a => !a.a_completer).length;
+      const todo     = actions.filter(a => a.a_completer).length;
+
+      html += `<div style="margin-bottom:22px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          ${_kpiBadge(kpi)}
+          <span style="font-size:12px;font-weight:600;color:var(--text);">${kpiLabel}</span>
+          <span style="font-size:10px;color:var(--muted);">${ready} prête${ready>1?'s':''} · ${todo} à compléter</span>
+        </div>`;
+
+      // Sort by score within KPI group
+      const scored = [...actions].sort((a, b) =>
+        scoreLever(
+          { kpi_impacted: kpi, delai_effet: b.delai_effet, career_development: b.career_development },
+          kpiRaw
+        ) - scoreLever(
+          { kpi_impacted: kpi, delai_effet: a.delai_effet, career_development: a.career_development },
+          kpiRaw
+        )
+      );
+      scored.forEach((a, idx) => { html += _buildActionCard(a, kpi, idx); });
+
+      if (gapNote) {
+        html += `<div class="levers-gap-note"><i class="fa-solid fa-triangle-exclamation" style="flex-shrink:0;margin-top:1px;"></i> ${_esc(gapNote)}</div>`;
+      }
+      html += `</div>`;
+    });
+  }
+
+  // ── Career dev actions ────────────────────────────────────────
+  if (al.career_dev_triggered && (al.career_dev_actions||[]).length > 0) {
+    html += `<div class="levers-sub-label" style="margin-top:8px;">
+      <i class="fa-solid fa-seedling"></i> Actions Career Development
+    </div>`;
+    al.career_dev_actions.forEach(a => { html += _buildActionCard(a, 'career'); });
+  }
+
+  content.innerHTML = html;
+
+  // Re-trigger scroll reveal on injected cards
+  content.querySelectorAll('.lever.reveal').forEach(el => revObs.observe(el));
+
+  // Re-apply tier visibility rules to the new content
+  const n = currentTier;
+  content.querySelectorAll('.lever-summary-text').forEach(el => { el.style.display = n === 2 ? '' : 'none'; });
+  content.querySelectorAll('.lever-detail').forEach(el => { el.style.display = (n === 1 || n === 2) ? (n === 2 ? 'none' : '') : ''; });
+
+  // Restore validated/rejected state
+  const store = getSuiviStore();
+  Object.keys(store).forEach(id => {
+    const card = document.getElementById('lever-act-' + id);
+    if (!card) return;
+    const btns = card.querySelector('.lever-actions-btns');
+    if (store[id].status === 'rejected') {
+      card.classList.add('lever-rejected');
+      if (btns) btns.innerHTML = '<span style="font-size:11px;color:var(--coral-l);"><i class="fa-solid fa-xmark"></i> Rejetée</span>';
+    } else {
+      card.classList.add('lever-validated');
+      if (btns) btns.innerHTML = '<span style="font-size:11px;color:var(--green-l);"><i class="fa-solid fa-check"></i> Validée</span>';
+    }
+  });
+}
+
+function _buildActionCard(a, kpi, rank) {
+  const sources = (a.source_evidence || []).slice(0,3)
+    .map(s => s.replace(/\.(pdf|pptx|xlsx)$/i,'').substring(0,32)).join(' · ');
+  const brief = _esc((a.description_metier||'').slice(0,120)) + ((a.description_metier||'').length>120?'…':'');
+  const safeId    = a.action_id || '';
+  const safeTitle = _escAttr(a.titre||'');
+  const safeKpi   = _escAttr(kpi);
+  const safeType  = _escAttr(a.type||'');
+  const safeDuree = _escAttr(a.duree||'');
+  // Priority rank badge (class-based)
+  const rankN     = (rank !== undefined && rank !== null) ? rank + 1 : null;
+  const rankBadge = rankN
+    ? `<span class="lever-rank-badge rank-${Math.min(rankN, 3)}">Priorité ${rankN}</span>`
+    : '';
+
+  return `<div class="lever reveal lever-action" id="lever-act-${safeId}">
+    <div class="lever-head">
+      <span class="lever-num">${_esc(safeId)} &middot; ${_esc(_KPI_LABEL[kpi]||kpi)}</span>
+      ${rankBadge}
+      ${a.a_completer ? '<span class="act-incomplete-badge"><i class="fa-solid fa-clock"></i> À compléter</span>' : ''}
+    </div>
+    <div class="lever-title">${_esc(a.titre)}</div>
+    ${a.delai_effet ? `<div class="lever-timing"><i class="fa-regular fa-clock fa-xs"></i> Effet attendu : ${_esc(a.delai_effet)}</div>` : ''}
+    <p class="lever-summary-text" style="display:none">${brief}</p>
+    <div class="lever-detail">
+      <div class="lever-desc">${_esc(a.description_metier)}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+        ${a.type  ? `<span class="insight-pill"><i class="fa-solid fa-tag fa-xs"></i> ${_esc(a.type)}</span>` : ''}
+        ${a.duree ? `<span class="insight-pill"><i class="fa-regular fa-clock fa-xs"></i> ${_esc(a.duree)}</span>` : ''}
+      </div>
+      ${sources ? `<div class="lever-source" style="margin-top:10px;"><i class="fa-solid fa-book-open"></i><span>${_esc(sources)}</span></div>` : ''}
+    </div>
+    <div class="lever-actions-btns">
+      <button class="btn-validate" onclick="validateLever('${safeId}','${safeTitle}','${safeKpi}','${safeType}','${safeDuree}')">
+        <i class="fa-solid fa-check"></i> Valider
+      </button>
+      <button class="btn-reject" onclick="rejectLever('${safeId}')">
+        <i class="fa-solid fa-xmark"></i> Rejeter
+      </button>
+    </div>
+  </div>`;
+}
+
+/* ─── Suivi localStorage store ───────────────────────────────────────────── */
+function getSuiviStore() {
+  try { return JSON.parse(localStorage.getItem('hcv_suivi') || '{}'); } catch { return {}; }
+}
+function saveSuiviStore(s) { localStorage.setItem('hcv_suivi', JSON.stringify(s)); }
+
+function addDays(dateStr, n) {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + n);
+  return d.toISOString().split('T')[0];
+}
+
+function buildJalons(validatedAt) {
+  return [
+    { id: 'j1', label: 'Kick-off',    due: addDays(validatedAt, 7),  done: false },
+    { id: 'j2', label: 'Mi-parcours', due: addDays(validatedAt, 45), done: false },
+    { id: 'j3', label: 'Mesure KPI',  due: addDays(validatedAt, 90), done: false },
+  ];
+}
+
+function toggleJalon(actionId, jalonId, checked) {
+  const store = getSuiviStore();
+  if (!store[actionId] || !store[actionId].jalons) return;
+  const jalon = store[actionId].jalons.find(j => j.id === jalonId);
+  if (!jalon) return;
+  jalon.done = checked;
+  // Auto-update statut global
+  const allDone = store[actionId].jalons.every(j => j.done);
+  const anyDone = store[actionId].jalons.some(j => j.done);
+  if (allDone)      store[actionId].status = 'Done';
+  else if (anyDone) store[actionId].status = 'In progress';
+  else              store[actionId].status = 'Not started';
+  saveSuiviStore(store);
+  renderSuivi();
+}
+
+function validateLever(id, titre, kpi, type, duree) {
+  const buName      = getCurrentBuName() || '—';
+  const validatedAt = new Date().toISOString().split('T')[0];
+  const store       = getSuiviStore();
+  store[id] = { id, titre, kpi, type, duree, bu: buName, status: 'Not started', validatedAt, jalons: buildJalons(validatedAt) };
+  saveSuiviStore(store);
+  const card = document.getElementById('lever-act-' + id);
+  if (card) {
+    card.classList.add('lever-validated');
+    const btns = card.querySelector('.lever-actions-btns');
+    if (btns) btns.innerHTML = '<span style="font-size:11px;color:var(--green-l);"><i class="fa-solid fa-check"></i> Validée</span>';
+  }
+  toast('Action ' + id + ' validée — visible dans le Suivi');
+
+  // T1 only: open chat and auto-explain why this action is relevant
+  if (currentTier === 1) {
+    setTimeout(() => {
+      ragSetMode('explain');
+      ragSendExplain(
+        EXPLAIN_PROMPTS.action(titre, kpi, buName),
+        '<i class="fa-solid fa-lightbulb"></i> Explication générée suite à la validation'
+      );
+    }, 800);
+  }
+}
+
+function rejectLever(id) {
+  const store = getSuiviStore();
+  store[id] = { ...(store[id]||{}), id, status: 'rejected' };
+  saveSuiviStore(store);
+  const card = document.getElementById('lever-act-' + id);
+  if (card) {
+    card.classList.add('lever-rejected');
+    const btns = card.querySelector('.lever-actions-btns');
+    if (btns) btns.innerHTML = '<span style="font-size:11px;color:var(--coral-l);"><i class="fa-solid fa-xmark"></i> Rejetée</span>';
+  }
+}
+
+/* ─── Suivi ──────────────────────────────────────────────────────────────── */
+function renderSuivi() {
+  const store  = getSuiviStore();
+  const active = Object.values(store).filter(a => a.status !== 'rejected');
+
+  _updateSuiviBadge(active);
+  _updateSuiviProgress(active);
+
+  const empty   = document.getElementById('suivi-empty');
+  const tableWr = document.getElementById('suivi-table-wrap');
+  const tbody   = document.getElementById('suivi-tbody');
+  if (!empty || !tableWr || !tbody) return;
+
+  if (active.length === 0) {
+    empty.style.display   = 'flex';
+    tableWr.style.display = 'none';
+    return;
+  }
+  empty.style.display   = 'none';
+  tableWr.style.display = 'block';
+
+  const KPI_STYLE = {
+    'Y':       { bg:'rgba(168,160,255,0.2)', color:'var(--purple-l)' },
+    '\u03BB':  { bg:'rgba(92,217,192,0.2)',  color:'var(--teal-l)' },
+    '\u03B2':  { bg:'rgba(240,181,69,0.2)',  color:'var(--amber-l)' },
+    '\u03C1':  { bg:'rgba(240,112,112,0.2)', color:'var(--coral-l)' },
+    'career':  { bg:'rgba(168,160,255,0.15)',color:'var(--purple-l)' },
+  };
+
+  const today = new Date().toISOString().split('T')[0];
+
+  tbody.innerHTML = active.map(a => {
+    const ks = KPI_STYLE[a.kpi] || KPI_STYLE['Y'];
+    const selClass = a.status === 'In progress' ? 'in-progress' : a.status === 'Done' ? 'done' : '';
+    const opts = ['Not started','In progress','Done'].map(v =>
+      `<option value="${v}" ${a.status===v?'selected':''}>${v}</option>`
+    ).join('');
+
+    // Format date from ISO to fr
+    const fmtDate = iso => {
+      if (!iso) return '—';
+      try { return new Date(iso).toLocaleDateString('fr-FR', { day:'numeric', month:'short', year:'numeric' }); }
+      catch { return iso; }
+    };
+
+    // Build jalons HTML
+    let jalonsHtml = '';
+    if (a.jalons && a.jalons.length) {
+      jalonsHtml = `<tr><td colspan="7" style="padding:0;">
+        <div class="jalons-container">
+          <div class="jalons-label"><i class="fa-solid fa-flag-checkered fa-xs"></i> Jalons</div>
+          ${a.jalons.map(j => {
+            const late = !j.done && j.due < today;
+            return `<div class="jalon-row${late ? ' jalon-late' : ''}">
+              <input type="checkbox" class="jalon-check" ${j.done ? 'checked' : ''}
+                onchange="toggleJalon('${a.id}','${j.id}',this.checked)" />
+              <span class="jalon-label">${_esc(j.label)}</span>
+              <span class="jalon-date">${fmtDate(j.due)}</span>
+              ${late ? '<span class="jalon-badge-late">En retard</span>' : ''}
+              ${j.done ? '<span class="jalon-badge-done">✓</span>' : ''}
+            </div>`;
+          }).join('')}
+        </div>
+      </td></tr>`;
+    }
+
+    return `<tr id="suivi-row-${a.id}">
+      <td style="font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap;">${_esc(a.id)}</td>
+      <td>
+        <div style="font-weight:600;color:var(--white);font-size:13px;">${_esc(a.titre||a.id)}</div>
+        ${a.bu ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;">${_esc(a.bu)}</div>` : ''}
+      </td>
+      <td>
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;font-size:11px;font-weight:800;background:${ks.bg};color:${ks.color};">${_esc(a.kpi||'—')}</span>
+      </td>
+      <td style="font-size:12px;color:var(--muted);white-space:nowrap;">${_esc(a.bu||'—')}</td>
+      <td style="font-size:11px;color:var(--muted);white-space:nowrap;">${fmtDate(a.validatedAt)}</td>
+      <td>
+        <select class="suivi-status-select ${selClass}" onchange="updateSuiviStatus('${a.id}',this)">${opts}</select>
+      </td>
+      <td>
+        <button class="suivi-remove-btn" onclick="removeSuiviItem('${a.id}')" title="Retirer du suivi">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </td>
+    </tr>${jalonsHtml}`;
+  }).join('');
+}
+
+function updateSuiviStatus(id, sel) {
+  const store = getSuiviStore();
+  if (!store[id]) return;
+  store[id].status = sel.value;
+  saveSuiviStore(store);
+  sel.className = 'suivi-status-select' + (sel.value==='In progress' ? ' in-progress' : sel.value==='Done' ? ' done' : '');
+  const active = Object.values(store).filter(a => a.status !== 'rejected');
+  _updateSuiviProgress(active);
+  _updateSuiviBadge(active);
+}
+
+function removeSuiviItem(id) {
+  const store = getSuiviStore();
+  delete store[id];
+  saveSuiviStore(store);
+  // Also un-validate the lever card if visible
+  const card = document.getElementById('lever-act-' + id);
+  if (card) {
+    card.classList.remove('lever-validated');
+    const btns = card.querySelector('.lever-actions-btns');
+    if (btns) btns.innerHTML = `
+      <button class="btn-validate" onclick="validateLever('${id}','','','','')"><i class="fa-solid fa-check"></i> Valider</button>
+      <button class="btn-reject"   onclick="rejectLever('${id}')"><i class="fa-solid fa-xmark"></i> Rejeter</button>`;
+  }
+  renderSuivi();
+}
+
+function clearSuivi() {
+  const store   = getSuiviStore();
+  const active  = Object.values(store).filter(a => a.status !== 'rejected');
+  if (active.length === 0) return;
+  if (!confirm(`Réinitialiser les ${active.length} action${active.length>1?'s':''} du suivi ?`)) return;
+  // Keep rejected entries, remove active ones
+  active.forEach(a => delete store[a.id]);
+  saveSuiviStore(store);
+  renderSuivi();
+  // Re-render levers to remove validated state
+  if (_currentLeversScorecard) renderLevers(_currentLeversScorecard, getCurrentBuName() || '');
+}
+
+/* ─── Mode Démo ──────────────────────────────────────────────────────────── */
+let _demoActive = false;
+
+async function launchDemo() {
+  if (_demoActive) return;
+  _demoActive = true;
+
+  const demoBtn = document.getElementById('demo-btn');
+  if (demoBtn) { demoBtn.disabled = true; demoBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin fa-xs"></i> Démo…'; }
+
+  try {
+    // ── Acte 1 : sélectionner Finance & Admin + scroller vers scorecard ────
+    const sel = document.getElementById('bu-selector');
+    if (sel) {
+      const opt = Array.from(sel.options).find(o =>
+        o.value.toLowerCase().includes('finance') || o.text.toLowerCase().includes('finance')
+      );
+      if (opt) { sel.value = opt.value; onBuChange(opt.value); }
+    }
+    await new Promise(r => setTimeout(r, 600));
+    const scorecard = document.getElementById('scorecard');
+    if (scorecard) scorecard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    await new Promise(r => setTimeout(r, 1200));
+
+    // ── Acte 2 : scroller vers les leviers + générer ──────────────────────
+    const leversSection = document.getElementById('levers');
+    if (leversSection) leversSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    await new Promise(r => setTimeout(r, 700));
+
+    const genBtn = document.getElementById('btn-generate-levers');
+    if (genBtn && !genBtn.disabled) genBtn.click();
+
+    // Attendre que les leviers soient générés (max 20s)
+    let waited = 0;
+    while (waited < 20000) {
+      await new Promise(r => setTimeout(r, 600));
+      waited += 600;
+      if (document.querySelectorAll('.lever').length > 0) break;
+    }
+    await new Promise(r => setTimeout(r, 500));
+
+    // ── Acte 3 : valider le premier levier ──────────────────────────────
+    const firstValidate = document.querySelector('.btn-validate');
+    if (firstValidate) {
+      firstValidate.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      await new Promise(r => setTimeout(r, 600));
+      firstValidate.click();
+    }
+    await new Promise(r => setTimeout(r, 800));
+
+    // ── Acte 4 : fermer RAG si ouvert + scroller vers le suivi ──────────
+    const ragPanel = document.getElementById('rag-panel');
+    if (ragPanel && !ragPanel.classList.contains('hidden')) closeRagPanel();
+
+    const suiviSection = document.getElementById('suivi');
+    if (suiviSection) suiviSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    await new Promise(r => setTimeout(r, 300));
+
+    const resetBtn = document.getElementById('reset-demo-btn');
+    if (resetBtn) resetBtn.style.display = 'inline-flex';
+
+    toast('Démo terminée — explorez le suivi jalonné ci-dessous');
+  } catch(e) {
+    toast('Erreur démo : ' + e.message);
+  } finally {
+    _demoActive = false;
+    if (demoBtn) { demoBtn.disabled = false; demoBtn.innerHTML = '<i class="fa-solid fa-play fa-xs"></i> Démo'; }
+  }
+}
+
+function resetDemo() {
+  if (!confirm('Réinitialiser la démo ? Le suivi sera vidé.')) return;
+  _demoActive = false;
+
+  // Vider le suivi
+  const store  = getSuiviStore();
+  const active = Object.values(store).filter(a => a.status !== 'rejected');
+  active.forEach(a => delete store[a.id]);
+  saveSuiviStore(store);
+  renderSuivi();
+
+  // Re-render leviers pour retirer l'état validé
+  if (_currentLeversScorecard) renderLevers(_currentLeversScorecard, getCurrentBuName() || '');
+
+  // Cacher le bouton reset
+  const resetBtn = document.getElementById('reset-demo-btn');
+  if (resetBtn) resetBtn.style.display = 'none';
+
+  toast('Démo réinitialisée');
+}
+
+function _updateSuiviBadge(active) {
+  const badge = document.getElementById('suivi-sidebar-badge');
+  if (!badge) return;
+  if (active.length > 0) {
+    const today   = new Date().toISOString().split('T')[0];
+    const hasLate = active.some(a =>
+      a.jalons && a.jalons.some(j => !j.done && j.due < today)
+    );
+    badge.textContent        = active.length;
+    badge.style.display      = 'inline-flex';
+    badge.style.background   = hasLate ? 'rgba(240,181,69,0.2)' : 'rgba(86,212,135,0.18)';
+    badge.style.color        = hasLate ? 'var(--amber-l)' : 'var(--green-l)';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function _updateSuiviProgress(active) {
+  const wrap  = document.getElementById('suivi-progress-wrap');
+  const label = document.getElementById('suivi-progress-label');
+  const fill  = document.getElementById('suivi-progress-fill');
+  if (!wrap || !active.length) { if (wrap) wrap.style.display = 'none'; return; }
+  const done = active.filter(a => a.status === 'Done').length;
+  const pct  = Math.round((done / active.length) * 100);
+  wrap.style.display  = 'flex';
+  label.textContent   = `${done} / ${active.length} terminée${done>1?'s':''}`;
+  fill.style.width    = pct + '%';
+}
+
+/* ─── Lexique accordéon ──────────────────────────────────────────────────── */
+function toggleLex(index) {
+  const item = document.getElementById('lex-item-' + index);
+  if (!item) return;
+  item.classList.toggle('open');
+}
+
+/* ─── Active sidebar link on scroll ─────────────────────────────────────── */
+const sections = ['scorecard','comparison','levers','suivi','lexique','trend'];
+const sLinks = document.querySelectorAll('.sidebar-link[href^="#"]');
+const sectObs = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      sLinks.forEach(l => l.classList.remove('active'));
+      const match = document.querySelector(`.sidebar-link[href="#${entry.target.id}"]`);
+      if (match) match.classList.add('active');
+    }
+  });
+}, { rootMargin: '-30% 0px -65% 0px' });
+sections.forEach(id => { const el = document.getElementById(id); if (el) sectObs.observe(el); });
+</script>
+
+<!-- ─── RAG Chat Panel ───────────────────────────────────────────────── -->
+<button class="rag-fab" id="rag-fab-btn" onclick="openRagPanel()" title="Analyste IA">
+  <i class="fa-solid fa-robot"></i>
+</button>
+
+<div id="rag-panel" class="hidden">
+  <div class="rag-header">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="rag-icon"><i class="fa-solid fa-robot"></i></div>
+      <div>
+        <div class="rag-title">Analyste IA <span class="rag-api-badge" id="rag-status-badge">●</span></div>
+        <div class="rag-subtitle">Posez vos questions sur les données RH CACEIS</div>
+        <span id="rag-mode-badge"></span>
+      </div>
+    </div>
+    <button class="rag-close" onclick="closeRagPanel()" title="Fermer"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+
+  <div class="rag-messages" id="rag-messages">
+    <div class="rag-msg assistant">
+      <div class="rag-bubble">
+        Bonjour ! Je suis votre analyste IA basé sur la documentation RH CACEIS.<br><br>
+        Je peux analyser le scorecard d'une BU, identifier les leviers prioritaires ou répondre à toute question sur les données RH.
+      </div>
+    </div>
+  </div>
+
+  <div class="rag-shortcuts">
+    <button class="rag-shortcut" onclick="ragShortcut('Génère le scorecard complet de Finance &amp; Admin avec recommandations')">
+      <i class="fa-solid fa-chart-line"></i> Scorecard F&amp;A
+    </button>
+    <button class="rag-shortcut" onclick="ragShortcut('Quels sont les leviers prioritaires pour améliorer l\'engagement et la performance ?')">
+      <i class="fa-solid fa-arrow-trend-up"></i> Leviers
+    </button>
+    <button class="rag-shortcut" onclick="ragShortcut('Quelles BUs ont les meilleurs résultats en formation et engagement ?')">
+      <i class="fa-solid fa-scale-balanced"></i> Comparer BUs
+    </button>
+    <button class="rag-shortcut" onclick="ragShortcut('Quelles sources documentaires sont indexées dans la base RAG ?')">
+      <i class="fa-solid fa-book"></i> Sources
+    </button>
+  </div>
+
+  <div class="rag-input-row">
+    <input type="text" id="rag-input" placeholder="Posez votre question…" onkeydown="if(event.key==='Enter')sendRagMessage()" />
+    <button id="rag-send" onclick="sendRagMessage()" title="Envoyer">
+      <i class="fa-solid fa-paper-plane"></i>
+    </button>
+  </div>
+</div>
+
+<!-- ─── Onboarding Tour ────────────────────────────────────────────────── -->
+<div id="tour-backdrop" onclick="endTour()"></div>
+<div id="tour-spotlight"></div>
+<div id="tour-panel">
+  <div id="tour-tier-badge" class="tour-tier-badge tb1"></div>
+  <div id="tour-counter"></div>
+  <div class="tour-progress" id="tour-progress"></div>
+  <div id="tour-title"></div>
+  <div id="tour-body"></div>
+  <div class="tour-btn-row">
+    <button id="tour-skip" onclick="endTour()">Passer le tour</button>
+    <button id="tour-next-btn" onclick="nextTourStep()">Suivant →</button>
+  </div>
+</div>
+</body>
+</html>
