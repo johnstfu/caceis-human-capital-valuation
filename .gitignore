@@ -34,6 +34,10 @@ Thumbs.db
 .idea/
 *.code-workspace
 
+# ── Agent feedback stores (poids appris + suggestions — locaux uniquement) ────
+rag/agent/feedback/store/feedback_store.json
+rag/agent/feedback/store/suggestion_queue.json
+
 # ── Build artifacts ───────────────────────────────────────────────────────────
 dist/
 build/

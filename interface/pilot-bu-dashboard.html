@@ -423,6 +423,20 @@
     .chart-wrap { position: relative; height: 220px; }
     .chart-wrap-tall { position: relative; height: 280px; }
 
+    /* ─── BU Performance Map ─────────────────────────────────────── */
+    .bumap-wrap { position: relative; height: 460px; }
+    .bumap-legend {
+      display: flex; flex-wrap: wrap; gap: 16px;
+      justify-content: center; margin-top: 14px;
+    }
+    .bumap-legend-item {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 11px; color: var(--muted);
+    }
+    .bumap-dot {
+      display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
+
     /* ─── Insight pills ──────────────────────────────────────────── */
     .insight-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
     .insight-pill {
@@ -885,6 +899,121 @@
     }
     #reset-demo-btn:hover { background: rgba(240,181,69,0.18); }
 
+    /* ─── Skip-demo button ───────────────────────────────────────── */
+    #skip-demo-btn {
+      display: none; align-items: center; gap: 5px;
+      padding: 5px 12px; border-radius: 8px;
+      border: 1px solid rgba(240,112,112,0.3);
+      background: rgba(240,112,112,0.08); color: var(--coral-l);
+      font-size: 11px; font-weight: 600; cursor: pointer;
+      font-family: inherit; white-space: nowrap; transition: all 0.2s;
+    }
+    #skip-demo-btn:hover { background: rgba(240,112,112,0.15); border-color: rgba(240,112,112,0.5); }
+
+    /* ─── Demo highlight pulse ───────────────────────────────────── */
+    .demo-highlight {
+      position: relative; z-index: 10;
+      box-shadow:
+        0 0 0 3px rgba(168,160,255,0.5),
+        0 0 20px rgba(168,160,255,0.2),
+        0 0 40px rgba(168,160,255,0.1) !important;
+      transition: box-shadow 0.3s ease;
+      border-radius: inherit;
+    }
+
+    /* ─── Demo highlight group (bandeau lumineux collectif) ──────── */
+    .demo-highlight-group {
+      position: relative; z-index: 10;
+      box-shadow:
+        0 0 0 2px rgba(168,160,255,0.7),
+        0 0 32px rgba(168,160,255,0.3),
+        0 0 64px rgba(168,160,255,0.15) !important;
+      border-radius: 16px;
+      animation: demoGroupPulse 1.4s ease-in-out infinite;
+    }
+    @keyframes demoGroupPulse {
+      0%,100% {
+        box-shadow: 0 0 0 2px rgba(168,160,255,0.7),
+                    0 0 32px rgba(168,160,255,0.3),
+                    0 0 64px rgba(168,160,255,0.15);
+      }
+      50% {
+        box-shadow: 0 0 0 3px rgba(168,160,255,1),
+                    0 0 48px rgba(168,160,255,0.45),
+                    0 0 90px rgba(168,160,255,0.22);
+      }
+    }
+
+    /* ─── Demo mode modal (auto / manuel) ───────────────────────── */
+    #demo-mode-modal {
+      position: fixed; inset: 0; z-index: 300;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(13,13,20,0.88); backdrop-filter: blur(12px);
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    #demo-mode-modal.visible { opacity: 1; pointer-events: all; }
+    .dmm-card {
+      background: var(--bg-card); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px; padding: 44px 52px; text-align: center;
+      max-width: 400px; width: 90%;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+    }
+    .dmm-icon { font-size: 28px; margin-bottom: 16px; color: var(--purple-l); }
+    .dmm-title { font-size: 20px; font-weight: 700; color: var(--white); margin-bottom: 8px; }
+    .dmm-sub { font-size: 13px; color: var(--muted); margin-bottom: 32px; line-height: 1.6; }
+    .dmm-btns { display: flex; gap: 12px; }
+    .dmm-btn {
+      flex: 1; padding: 14px 0; border-radius: 12px; border: 1px solid;
+      font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all 0.2s;
+    }
+    .dmm-btn-auto {
+      background: rgba(60,52,137,0.3); border-color: rgba(168,160,255,0.4);
+      color: var(--purple-l);
+    }
+    .dmm-btn-auto:hover { background: rgba(60,52,137,0.55); border-color: var(--purple-l); }
+    .dmm-btn-manual {
+      background: rgba(8,80,65,0.3); border-color: rgba(92,217,192,0.4);
+      color: var(--teal-l);
+    }
+    .dmm-btn-manual:hover { background: rgba(8,80,65,0.55); border-color: var(--teal-l); }
+
+    /* ─── Narration overlay ──────────────────────────────────────── */
+    #demo-narration {
+      position: fixed; inset: 0; z-index: 200;
+      display: none; align-items: center; justify-content: center;
+      flex-direction: column; gap: 12px;
+      background: rgba(13,13,20,0.92);
+      backdrop-filter: blur(8px);
+      opacity: 0; transition: opacity 0.4s ease;
+      text-align: center; pointer-events: none;
+    }
+    #demo-narration.visible { opacity: 1; pointer-events: all; }
+    #demo-narration .narr-act {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--purple-l); margin-bottom: 4px;
+    }
+    #demo-narration .narr-title {
+      font-size: 48px; font-weight: 600; font-style: italic;
+      color: var(--text); letter-spacing: -0.02em; line-height: 1.1;
+    }
+    #demo-narration .narr-subtitle {
+      font-size: 15px; font-weight: 400;
+      color: var(--muted); letter-spacing: 0.03em; margin-top: 8px;
+    }
+    #demo-next-btn {
+      display: none; margin-top: 36px;
+      padding: 13px 36px; border-radius: 10px;
+      border: 1px solid rgba(168,160,255,0.5);
+      background: rgba(60,52,137,0.4); color: var(--purple-l);
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      font-family: inherit; letter-spacing: 0.02em;
+      transition: all 0.2s;
+    }
+    #demo-next-btn:hover { background: rgba(60,52,137,0.7); border-color: var(--purple-l); transform: translateY(-1px); }
+
     /* ─── KPI plain-language caption ───────────────────────────── */
     .kpi-plain-text {
       font-size: 11px; font-style: italic;
@@ -1140,6 +1269,7 @@
     <a href="index.html" class="sidebar-link"><i class="fa-solid fa-house"></i> Overview</a>
     <a href="#scorecard" class="sidebar-link active" onclick="closeSidebar()"><i class="fa-solid fa-gauge-high"></i> KPI Scorecard</a>
     <a href="#comparison" class="sidebar-link" onclick="closeSidebar()"><i class="fa-solid fa-chart-bar"></i> BU Comparison</a>
+    <a href="#bu-map" class="sidebar-link" id="sidebar-link-bumap" onclick="closeSidebar()" style="display:none"><i class="fa-solid fa-map-location-dot"></i> BU Performance Map</a>
     <a href="#levers" class="sidebar-link" onclick="closeSidebar()"><i class="fa-solid fa-bolt"></i> Action Levers</a>
     <a href="#suivi" class="sidebar-link" id="sidebar-link-suivi" onclick="closeSidebar()" style="display:none"><i class="fa-solid fa-clipboard-check"></i> Suivi <span id="suivi-sidebar-badge" style="display:none;margin-left:auto;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:700;background:rgba(86,212,135,0.18);color:var(--green-l);">0</span></a>
     <a href="#lexique" class="sidebar-link" onclick="closeSidebar()"><i class="fa-solid fa-book"></i> Documentation</a>
@@ -1186,6 +1316,9 @@
         </div>
         <button id="demo-btn" onclick="launchDemo()" title="Lancer la démo guidée">
           <i class="fa-solid fa-play fa-xs"></i> Démo
+        </button>
+        <button id="skip-demo-btn" onclick="skipDemo()" title="Arrêter la démo">
+          <i class="fa-solid fa-forward-step fa-xs"></i> Skip
         </button>
         <div class="topbar-actions">
           <button class="icon-btn" title="Changer de profil" onclick="showTierSplash()"><i class="fa-solid fa-right-left"></i></button>
@@ -1478,6 +1611,44 @@
 
       </div>
 
+      <!-- ── BU PERFORMANCE MAP ────────────────────────── -->
+      <div id="bu-map" style="margin-bottom:28px;display:none;">
+        <div class="section-head reveal">
+          <span class="section-label"><i class="fa-solid fa-map-location-dot"></i> &nbsp;BU Performance Map</span>
+          <div class="section-title">Formation vs Engagement — 26 Business Units</div>
+        </div>
+
+        <div class="panel reveal" style="padding:28px 24px 20px;">
+          <div class="bumap-wrap">
+            <canvas id="buMapChart"></canvas>
+          </div>
+
+          <!-- Legend -->
+          <div class="bumap-legend">
+            <span class="bumap-legend-item">
+              <span class="bumap-dot" style="background:rgba(86,212,135,0.8);"></span>
+              V_HC &gt; 0.46 — Haute performance
+            </span>
+            <span class="bumap-legend-item">
+              <span class="bumap-dot" style="background:rgba(240,181,69,0.8);"></span>
+              V_HC 0.42–0.46 — Performance intermédiaire
+            </span>
+            <span class="bumap-legend-item">
+              <span class="bumap-dot" style="background:rgba(240,112,112,0.8);"></span>
+              V_HC &lt; 0.42 — Priorité d'action
+            </span>
+            <span class="bumap-legend-item" style="opacity:0.5">
+              <span class="bumap-dot" style="background:var(--muted);border-radius:50%;"></span>
+              Taille = effectif
+            </span>
+          </div>
+
+          <p style="font-size:11px;color:var(--muted);margin-top:10px;opacity:0.6;text-align:center;">
+            Cliquez sur une bulle pour sélectionner la BU dans le scorecard
+          </p>
+        </div>
+      </div>
+
       <!-- ── ACTION LEVERS ──────────────────────────────── -->
       <div id="levers" style="margin-bottom:28px;">
         <div class="section-head reveal" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
@@ -1768,6 +1939,30 @@
 <!-- Toast -->
 <div id="toast"><i class="fa-solid fa-circle-check"></i><span id="toast-msg">Done</span></div>
 
+<!-- Demo narration overlay -->
+<div id="demo-narration">
+  <div class="narr-act" id="narr-act"></div>
+  <div class="narr-title" id="narr-title"></div>
+  <div class="narr-subtitle" id="narr-subtitle"></div>
+  <button id="demo-next-btn" onclick="demoPressNext()">Étape suivante →</button>
+</div>
+
+<div id="demo-mode-modal">
+  <div class="dmm-card">
+    <div class="dmm-icon"><i class="fa-solid fa-circle-play"></i></div>
+    <div class="dmm-title">Mode démo</div>
+    <div class="dmm-sub">Choisissez comment avancer entre les actes</div>
+    <div class="dmm-btns">
+      <button class="dmm-btn dmm-btn-auto" onclick="startDemoMode('auto')">
+        <i class="fa-solid fa-forward-fast"></i> Automatique
+      </button>
+      <button class="dmm-btn dmm-btn-manual" onclick="startDemoMode('manual')">
+        <i class="fa-solid fa-hand-pointer"></i> Manuel
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ─── Date ───────────────────────────────────────────────────────────────── */
 document.getElementById('topbar-date').textContent =
@@ -1925,12 +2120,20 @@ function setTier(n) {
     composite:        document.getElementById('section-composite'),
     suivi:            document.getElementById('suivi'),
     sidebarSuivi:     document.getElementById('sidebar-link-suivi'),
+    buMap:            document.getElementById('bu-map'),
+    sidebarBuMap:     document.getElementById('sidebar-link-bumap'),
   };
 
   // ── 6. Apply visibility rules per tier ───────────────
-  // demo-btn: T1 only
+  // demo-btn + skip-demo-btn: T1 only
   const demoBtn = document.getElementById('demo-btn');
   if (demoBtn) demoBtn.style.display = (n === 1) ? 'inline-flex' : 'none';
+  if (n !== 1) {
+    const skipBtn  = document.getElementById('skip-demo-btn');
+    const resetBtn2 = document.getElementById('reset-demo-btn');
+    if (skipBtn)  skipBtn.style.display  = 'none';
+    if (resetBtn2) resetBtn2.style.display = 'none';
+  }
 
   if (n === 1) {
     // ╔═══════════════════════════════════╗
@@ -1942,6 +2145,7 @@ function setTier(n) {
     s(EL.trend);            s(EL.multiPanel);
     s(EL.absenteeism);      s(EL.composite);
     s(EL.suivi);            s(EL.sidebarSuivi);
+    s(EL.buMap);            s(EL.sidebarBuMap);
     sa('.conf-wrap');
     ha('.lever-summary-text');
     sa('.lever-detail');
@@ -1960,6 +2164,7 @@ function setTier(n) {
     s(EL.absenteeism);
     h(EL.composite);                             // no model internals
     h(EL.suivi);            h(EL.sidebarSuivi);  // T1 only
+    h(EL.buMap);            h(EL.sidebarBuMap);  // T1 only
     sa('.conf-wrap');
     sa('.lever-summary-text');                   // show brief summary
     ha('.lever-detail');                         // hide full desc + source
@@ -1975,6 +2180,7 @@ function setTier(n) {
     h(EL.trend);                                 // no historical trend
     h(EL.absenteeism);      h(EL.composite);
     h(EL.suivi);            h(EL.sidebarSuivi);  // T1 only
+    h(EL.buMap);            h(EL.sidebarBuMap);  // T1 only
     ha('.conf-wrap');                            // hide confidence bars
     ha('.lever-summary-text');
     ha('.lever-detail');
@@ -2041,7 +2247,7 @@ async function loadKpiData() {
   const paths = [
     './data/kpi-output.json',
     '../rag/data/kpi-output.json',
-    'http://localhost:8000/kpi-data',
+    'http://localhost:8000/api/kpi-data',
   ];
   for (const path of paths) {
     try {
@@ -2085,6 +2291,7 @@ loadKpiData()
     updateLevers(data, bu);
     updateMetaChips(data, bu);
     initCharts(data, bu);
+    renderBuMap(data);
   })
   .catch(err => console.warn('[HCV] KPI data error:', err));
 
@@ -2671,6 +2878,168 @@ function initCharts(data, bu) {
       }
     });
   })();
+}
+
+
+/* ─── BU Performance Map ─────────────────────────────────────────────────── */
+let _buMapData = [];
+
+function renderBuMap(kpiData) {
+  if (!kpiData || !kpiData.business_units) return;
+  const bus = kpiData.business_units;
+  _buMapData = bus;
+
+  const avg = key => bus.reduce((s, b) => s + b[key], 0) / bus.length;
+  const groupY   = avg('kpi_Y');
+  const groupLam = avg('kpi_lambda');
+
+  const getColor = vhc => {
+    if (vhc >= 0.46) return { bg: 'rgba(86,212,135,0.72)', bd: 'rgba(86,212,135,0.95)' };
+    if (vhc >= 0.42) return { bg: 'rgba(240,181,69,0.72)',  bd: 'rgba(240,181,69,0.95)' };
+    return                   { bg: 'rgba(240,112,112,0.72)', bd: 'rgba(240,112,112,0.95)' };
+  };
+
+  const datasets = bus.map(b => {
+    const c = getColor(b.v_hc_index);
+    const r = Math.max(5, Math.min(32, Math.sqrt(b.n_employees) * 1.8));
+    return {
+      label: b.name,
+      data: [{ x: b.kpi_Y, y: b.kpi_lambda, r }],
+      backgroundColor: c.bg,
+      borderColor: c.bd,
+      borderWidth: 1.5,
+    };
+  });
+
+  const canvas = document.getElementById('buMapChart');
+  if (!canvas) return;
+  const existing = Chart.getChart(canvas);
+  if (existing) existing.destroy();
+
+  new Chart(canvas.getContext('2d'), {
+    type: 'bubble',
+    data: { datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      onHover(evt, elements) {
+        evt.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+      },
+      onClick(evt, elements) {
+        if (!elements.length) return;
+        const b = _buMapData[elements[0].datasetIndex];
+        if (!b) return;
+        const sel = document.getElementById('bu-selector');
+        if (!sel) return;
+        const opt = Array.from(sel.options).find(o => o.value === b.id);
+        if (opt) {
+          sel.value = opt.value;
+          sel.dispatchEvent(new Event('change'));
+          if (typeof onBuChange === 'function') onBuChange(opt.value);
+          document.getElementById('scorecard')?.scrollIntoView({ behavior: 'smooth' });
+          toast(`BU sélectionnée : ${b.name}`);
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1a1a2e',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          padding: 10,
+          callbacks: {
+            title(items) {
+              return _buMapData[items[0].datasetIndex]?.name || '';
+            },
+            label(item) {
+              const b = _buMapData[item.datasetIndex];
+              if (!b) return [];
+              return [
+                `Engagement (Y) : ${b.kpi_Y.toFixed(2)} / 5`,
+                `Formation (λ)  : ${b.kpi_lambda.toFixed(0)} h/an`,
+                `V_HC           : ${(b.v_hc_index * 100).toFixed(1)} / 100`,
+                `Effectif       : ${b.n_employees}`,
+              ];
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'Engagement (Y)  →',
+            color: '#8888a8',
+            font: { size: 11 },
+          },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          border: { color: 'rgba(255,255,255,0.1)' },
+          min: 2.75, max: 3.75,
+          ticks: { color: '#8888a8', stepSize: 0.1,
+            callback: v => v.toFixed(1) },
+        },
+        y: {
+          title: {
+            display: true,
+            text: 'Formation λ (h/an)  →',
+            color: '#8888a8',
+            font: { size: 11 },
+          },
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          border: { color: 'rgba(255,255,255,0.1)' },
+          min: 10, max: 65,
+          ticks: { color: '#8888a8', stepSize: 10 },
+        }
+      }
+    },
+    plugins: [{
+      id: 'buMapOverlay',
+      afterDraw(chart) {
+        const { ctx, chartArea: ca, scales } = chart;
+        const xAvg = scales.x.getPixelForValue(groupY);
+        const yAvg = scales.y.getPixelForValue(groupLam);
+
+        ctx.save();
+
+        // Crosshair lines
+        ctx.setLineDash([5, 5]);
+        ctx.strokeStyle = 'rgba(168,160,255,0.2)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(xAvg, ca.top); ctx.lineTo(xAvg, ca.bottom); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(ca.left, yAvg); ctx.lineTo(ca.right, yAvg); ctx.stroke();
+        ctx.setLineDash([]);
+
+        // "moy. groupe" labels on crosshairs
+        ctx.fillStyle = 'rgba(168,160,255,0.4)';
+        ctx.font = '9px system-ui';
+        ctx.textAlign = 'left';
+        ctx.fillText('moy. groupe', xAvg + 4, ca.top + 12);
+        ctx.textAlign = 'right';
+        ctx.fillText('moy. groupe', ca.right - 4, yAvg - 4);
+
+        // Quadrant labels (one per corner)
+        ctx.font = '10px system-ui';
+        const ql = 'rgba(136,136,168,0.28)';
+        ctx.fillStyle = ql;
+
+        // Bottom-left — Zone prioritaire
+        ctx.textAlign = 'left';
+        ctx.fillText('Zone prioritaire', ca.left + 10, ca.bottom - 10);
+
+        // Top-left — Investissement à optimiser
+        ctx.fillText('Investissement à optimiser', ca.left + 10, ca.top + 18);
+
+        // Bottom-right — Talent naturel
+        ctx.textAlign = 'right';
+        ctx.fillText('Talent naturel', ca.right - 10, ca.bottom - 10);
+
+        // Top-right — Formation efficace ★
+        ctx.fillText('Formation efficace', ca.right - 10, ca.top + 18);
+
+        ctx.restore();
+      }
+    }]
+  });
 }
 
 
@@ -3614,97 +3983,492 @@ function clearSuivi() {
   if (_currentLeversScorecard) renderLevers(_currentLeversScorecard, getCurrentBuName() || '');
 }
 
-/* ─── Mode Démo ──────────────────────────────────────────────────────────── */
-let _demoActive = false;
+/* ─── DEMO ENGINE ────────────────────────────────────────────────────────────
+ *
+ * Architecture : scenario[] → demoEngine() → executeStep() → séquentiel
+ *
+ * Pour ajouter un scénario :
+ *   1. Créer un tableau SCENARIO_XXX avec des étapes typées
+ *   2. Appeler demoEngine(SCENARIO_XXX)
+ *
+ * Types d'étapes :
+ *   'narrate'  → overlay plein écran (titre + sous-titre)
+ *   'toast'    → message contextuel 3s
+ *   'scroll'   → scrollIntoView sur un sélecteur CSS
+ *   'select'   → change la valeur d'un <select> + dispatch change
+ *   'click'    → simule un clic sur un élément
+ *   'wait'     → poll une condition (fn) jusqu'au timeout
+ *   'highlight'→ halo lumineux temporaire sur un élément
+ *   'chat'     → ouvre le panel RAG + frappe un message + envoie
+ *   'explain'  → déclenche explainKpi(kpi)
+ *
+ * Contrôle :
+ *   _demoActive = false    → stoppe demoEngine entre chaque étape
+ *   skipDemo()             → force _demoActive = false
+ *   Le bouton #demo-btn est masqué en T2/T3 par setTier()
+ * ─────────────────────────────────────────────────────────────────────────── */
 
-async function launchDemo() {
+let _demoActive = false;
+let _demoMode = 'auto';          // 'auto' | 'manual'
+let _demoNextResolver = null;    // resolve() fn waiting for user click in manual mode
+
+/* ─── Scénario principal (7 actes) ────────────────────────────────────────── */
+const SCENARIO_MAIN = [
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ACTE 1 — DIAGNOSTIC
+  // "On ouvre le dashboard. On voit le problème."
+  // ═══════════════════════════════════════════════════════════════════
+
+  { type: 'narrate',
+    act: 'Act 1',
+    title: 'Diagnostic',
+    subtitle: 'Finance & Admin · Identifying the gap',
+    duration: 2500 },
+
+  { type: 'select', target: '#bu-selector', value: 'spf__fin_treasury__admin', pause: 800 },
+  { type: 'scroll', target: '#scorecard', pause: 1000 },
+  { type: 'toast',
+    message: 'Finance & Admin: Y = 3.28/5 — below CACEIS average (3.40)',
+    pause: 2000 },
+
+  // Bandeau lumineux collectif sur tous les KPIs simultanément
+  { type: 'highlight-group',
+    targets: ['.kpi-card.kpi-y', '.kpi-card.kpi-l', '.kpi-card.kpi-b',
+              '.kpi-card.kpi-p', '.kpi-card.kpi-r'],
+    duration: 3200, pause: 600 },
+
+  { type: 'toast',
+    message: 'Training hours above average (46h) but engagement below → not a volume problem',
+    pause: 2500 },
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ACTE 2 — COMPRÉHENSION
+  // "On demande au chatbot d'expliquer simplement."
+  // ═══════════════════════════════════════════════════════════════════
+
+  { type: 'narrate',
+    act: 'Act 2',
+    title: 'Understanding',
+    subtitle: 'AI explains in plain language',
+    duration: 2000 },
+
+  { type: 'explain', kpi: 'Y', pause: 1000 },
+  { type: 'wait',
+    condition: () => document.querySelectorAll('.rag-msg.assistant').length > 1,
+    timeout: 15000, pause: 3000 },
+  { type: 'toast', message: 'The chatbot explains in 3 sentences — no jargon, no sources', pause: 2000 },
+  { type: 'click', target: '.rag-close', pause: 800 },
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ACTE 3 — PRESCRIPTION
+  // "L'IA génère des recommandations actionnables."
+  // ═══════════════════════════════════════════════════════════════════
+
+  { type: 'narrate',
+    act: 'Act 3',
+    title: 'Prescription',
+    subtitle: 'AI generates BU-specific action levers',
+    duration: 2000 },
+
+  { type: 'scroll', target: '#levers', pause: 1000 },
+  { type: 'click', target: '#btn-generate-levers', pause: 1000 },
+  { type: 'toast',
+    message: 'Querying CACEIS knowledge base (sourced actions + semantic chunks)…',
+    pause: 1500 },
+  { type: 'wait',
+    condition: () => document.querySelectorAll('#levers-content .lever').length > 0,
+    timeout: 30000, pause: 1500 },
+
+  // Bandeau lumineux collectif sur le bloc leviers entier
+  { type: 'highlight-group', targets: ['#levers-content'], duration: 3200, pause: 600 },
+
+  { type: 'toast',
+    message: 'Priority levers identified — sourced from CACEIS validated action library',
+    pause: 2500 },
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ACTE 4 — VALIDATION (human in the loop)
+  // "Le T1 valide. L'action entre dans le suivi."
+  // ═══════════════════════════════════════════════════════════════════
+
+  { type: 'narrate',
+    act: 'Act 4',
+    title: 'Validation',
+    subtitle: 'The human decides. Art. 22 GDPR by design.',
+    duration: 2000 },
+
+  { type: 'click', target: '.btn-validate', pause: 1000 },
+  { type: 'toast',
+    message: 'Action validated → tracked with milestones J+7 / J+45 / J+90',
+    pause: 1500 },
+  { type: 'wait',
+    condition: () => document.querySelectorAll('.rag-msg.assistant').length > 2,
+    timeout: 15000, pause: 3000 },
+  { type: 'toast',
+    message: 'AI automatically explains why this action is relevant for this BU',
+    pause: 2500 },
+  { type: 'click', target: '.rag-close', pause: 1000 },
+  { type: 'click', target: '[data-tier-btn="1"]', pause: 400 },
+  { type: 'wait',
+    condition: () => {
+      const section = document.getElementById('suivi');
+      const wrap    = document.getElementById('suivi-table-wrap');
+      const tbody   = document.getElementById('suivi-tbody');
+      return section && section.style.display !== 'none'
+          && wrap   && wrap.style.display   !== 'none'
+          && tbody  && tbody.querySelector('tr') !== null;
+    },
+    timeout: 5000, pause: 500 },
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ACTE 5 — SUIVI
+  // "On suit l'action dans le temps. Jalons."
+  // ═══════════════════════════════════════════════════════════════════
+
+  { type: 'narrate',
+    act: 'Act 5',
+    title: 'Tracking',
+    subtitle: 'One line in the portfolio. Three milestones. One status.',
+    duration: 2200 },
+
+  { type: 'scroll', target: '#suivi', pause: 1500 },
+
+  // Bandeau lumineux collectif : tableau + jalons simultanément
+  { type: 'highlight-group',
+    targets: ['#suivi-table-wrap', '.jalons-container'],
+    duration: 3500, pause: 500 },
+
+  { type: 'toast',
+    message: 'This is what a validated action looks like for a Chief Officer: one line, three milestones, one status.',
+    pause: 4500 },
+  { type: 'toast',
+    message: 'Overdue milestones are flagged automatically — no manual follow-up needed.',
+    pause: 3500 },
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ACTE 6 — EXPLORATION LIBRE
+  // "Le chatbot répond aux questions ouvertes."
+  // ═══════════════════════════════════════════════════════════════════
+
+  { type: 'narrate',
+    act: 'Act 6',
+    title: 'Free exploration',
+    subtitle: 'Ask anything about CACEIS HR data',
+    duration: 2000 },
+
+  { type: 'chat',
+    message: 'Quels sont les principaux leviers pour améliorer l\'engagement dans les BUs finance du groupe ?',
+    pause: 1000 },
+  { type: 'wait',
+    condition: () => {
+      const msgs = document.querySelectorAll('.rag-msg.assistant');
+      return msgs.length > 3 && !document.querySelector('.rag-typing');
+    },
+    timeout: 20000, pause: 7000 },
+  { type: 'toast',
+    message: 'Expert mode: RAG searches the knowledge base and cites its sources.',
+    pause: 3500 },
+  { type: 'click', target: '.rag-close', pause: 1200 },
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ACTE 7 — SWITCH TIERS
+  // "Chaque profil voit ce dont il a besoin — rien de plus."
+  // ═══════════════════════════════════════════════════════════════════
+
+  { type: 'narrate',
+    act: 'Act 7',
+    title: 'Access tiers',
+    subtitle: 'Each level sees what it needs — nothing more',
+    duration: 2000 },
+
+  { type: 'scroll', target: '#scorecard', pause: 800 },
+  { type: 'click', target: '[data-tier-btn="2"]', pause: 500 },
+  { type: 'toast', message: 'Tier 2 — BU Leadership: KPIs + benchmarks, no model internals', pause: 2500 },
+  { type: 'click', target: '[data-tier-btn="3"]', pause: 500 },
+  { type: 'toast', message: 'Tier 3 — Manager: 5 KPIs only. Creates the question, not the answer.', pause: 2500 },
+  { type: 'click', target: '[data-tier-btn="1"]', pause: 500 },
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FIN
+  // ═══════════════════════════════════════════════════════════════════
+
+  { type: 'narrate',
+    act: '',
+    title: 'Demo complete',
+    subtitle: 'Diagnose · Understand · Prescribe · Validate · Track · Explore',
+    duration: 4000 },
+
+  { type: 'toast', message: 'Demo finished. Dashboard is in normal interactive mode.', pause: 0 },
+];
+
+/* ─── Moteur de démo ─────────────────────────────────────────────────────── */
+async function demoEngine(scenario) {
   if (_demoActive) return;
   _demoActive = true;
 
-  const demoBtn = document.getElementById('demo-btn');
-  if (demoBtn) { demoBtn.disabled = true; demoBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin fa-xs"></i> Démo…'; }
+  const skipBtn = document.getElementById('skip-demo-btn');
+  const resetBtn = document.getElementById('reset-demo-btn');
+  if (skipBtn)  skipBtn.style.display  = 'inline-flex';
+  if (resetBtn) resetBtn.style.display = 'inline-flex';
 
-  try {
-    // ── Acte 1 : sélectionner Finance & Admin + scroller vers scorecard ────
-    const sel = document.getElementById('bu-selector');
-    if (sel) {
-      const opt = Array.from(sel.options).find(o =>
-        o.value.toLowerCase().includes('finance') || o.text.toLowerCase().includes('finance')
-      );
-      if (opt) { sel.value = opt.value; onBuChange(opt.value); }
+  for (let i = 0; i < scenario.length; i++) {
+    if (!_demoActive) break;
+    await _executeStep(scenario[i]);
+  }
+
+  _demoActive = false;
+  const nextBtn = document.getElementById('demo-next-btn');
+  if (nextBtn) nextBtn.style.display = 'none';
+  if (skipBtn) skipBtn.style.display = 'none';
+}
+
+async function _executeStep(step) {
+  const PAUSE = ms => new Promise(r => setTimeout(r, ms));
+
+  switch (step.type) {
+
+    case 'narrate': {
+      showNarrationOverlay(step.act || '', step.title, step.subtitle);
+      if (_demoMode === 'manual') {
+        const nextBtn = document.getElementById('demo-next-btn');
+        if (nextBtn) nextBtn.style.display = 'inline-flex';
+        await new Promise(resolve => { _demoNextResolver = resolve; });
+        _demoNextResolver = null;
+        if (nextBtn) nextBtn.style.display = 'none';
+      } else {
+        await PAUSE(step.duration || 2500);
+      }
+      hideNarrationOverlay();
+      await PAUSE(300);
+      break;
     }
-    await new Promise(r => setTimeout(r, 600));
-    const scorecard = document.getElementById('scorecard');
-    if (scorecard) scorecard.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-    await new Promise(r => setTimeout(r, 1200));
-
-    // ── Acte 2 : scroller vers les leviers + générer ──────────────────────
-    const leversSection = document.getElementById('levers');
-    if (leversSection) leversSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    await new Promise(r => setTimeout(r, 700));
-
-    const genBtn = document.getElementById('btn-generate-levers');
-    if (genBtn && !genBtn.disabled) genBtn.click();
-
-    // Attendre que les leviers soient générés (max 20s)
-    let waited = 0;
-    while (waited < 20000) {
-      await new Promise(r => setTimeout(r, 600));
-      waited += 600;
-      if (document.querySelectorAll('.lever').length > 0) break;
+    case 'toast': {
+      toast(step.message);
+      await PAUSE(step.pause || 1500);
+      break;
     }
-    await new Promise(r => setTimeout(r, 500));
 
-    // ── Acte 3 : valider le premier levier ──────────────────────────────
-    const firstValidate = document.querySelector('.btn-validate');
-    if (firstValidate) {
-      firstValidate.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      await new Promise(r => setTimeout(r, 600));
-      firstValidate.click();
+    case 'scroll': {
+      const el = document.querySelector(step.target);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      await PAUSE(step.pause || 1000);
+      break;
     }
-    await new Promise(r => setTimeout(r, 800));
 
-    // ── Acte 4 : fermer RAG si ouvert + scroller vers le suivi ──────────
-    const ragPanel = document.getElementById('rag-panel');
-    if (ragPanel && !ragPanel.classList.contains('hidden')) closeRagPanel();
+    case 'select': {
+      const sel = document.querySelector(step.target);
+      if (sel) {
+        // Trouver l'option par value exacte ou par text partiel
+        const opt = Array.from(sel.options).find(o =>
+          o.value === step.value ||
+          o.text.toLowerCase().includes((step.value || '').toLowerCase())
+        );
+        if (opt) {
+          sel.value = opt.value;
+          sel.dispatchEvent(new Event('change'));
+          // Déclencher aussi onBuChange si c'est le sélecteur BU
+          if (sel.id === 'bu-selector' && typeof onBuChange === 'function') {
+            onBuChange(opt.value);
+          }
+        }
+      }
+      await PAUSE(step.pause || 800);
+      break;
+    }
 
-    const suiviSection = document.getElementById('suivi');
-    if (suiviSection) suiviSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    case 'click': {
+      const btn = document.querySelector(step.target);
+      if (btn && !btn.disabled) btn.click();
+      await PAUSE(step.pause || 500);
+      break;
+    }
 
-    await new Promise(r => setTimeout(r, 300));
+    case 'wait': {
+      const start   = Date.now();
+      const timeout = step.timeout || 15000;
+      while (!step.condition() && Date.now() - start < timeout) {
+        if (!_demoActive) return;
+        await PAUSE(500);
+      }
+      await PAUSE(step.pause || 1000);
+      break;
+    }
 
-    const resetBtn = document.getElementById('reset-demo-btn');
-    if (resetBtn) resetBtn.style.display = 'inline-flex';
+    case 'highlight-group': {
+      const els = (step.targets || [])
+        .map(sel => document.querySelector(sel))
+        .filter(Boolean);
+      els.forEach(el => el.classList.add('demo-highlight-group'));
+      await PAUSE(step.duration || 2500);
+      els.forEach(el => el.classList.remove('demo-highlight-group'));
+      await PAUSE(step.pause || 400);
+      break;
+    }
 
-    toast('Démo terminée — explorez le suivi jalonné ci-dessous');
-  } catch(e) {
-    toast('Erreur démo : ' + e.message);
-  } finally {
-    _demoActive = false;
-    if (demoBtn) { demoBtn.disabled = false; demoBtn.innerHTML = '<i class="fa-solid fa-play fa-xs"></i> Démo'; }
+    case 'highlight': {
+      const el = document.querySelector(step.target);
+      if (el) {
+        el.classList.add('demo-highlight');
+        setTimeout(() => el.classList.remove('demo-highlight'), step.duration || 2000);
+      }
+      await PAUSE((step.duration || 2000) + (step.pause || 300));
+      break;
+    }
+
+    case 'explain': {
+      if (typeof explainKpi === 'function') explainKpi(step.kpi);
+      await PAUSE(step.pause || 1000);
+      break;
+    }
+
+    case 'chat': {
+      if (typeof openRagPanel === 'function') openRagPanel();
+      await PAUSE(500);
+      const input = document.getElementById('rag-input');
+      if (input) {
+        input.value = '';
+        input.focus();
+        // Effet machine à écrire
+        for (let i = 0; i < step.message.length; i++) {
+          if (!_demoActive) return;
+          input.value += step.message[i];
+          // Déclencher un event input pour que le UI se mette à jour
+          input.dispatchEvent(new Event('input'));
+          if (i % 3 === 0) await PAUSE(18);
+        }
+        await PAUSE(400);
+        if (typeof sendRagMessage === 'function') sendRagMessage();
+      }
+      await PAUSE(step.pause || 1000);
+      break;
+    }
   }
 }
 
-function resetDemo() {
-  if (!confirm('Réinitialiser la démo ? Le suivi sera vidé.')) return;
-  _demoActive = false;
+/* ─── Overlay narration ──────────────────────────────────────────────────── */
+function showNarrationOverlay(act, title, subtitle) {
+  const overlay = document.getElementById('demo-narration');
+  if (!overlay) return;
+  document.getElementById('narr-act').textContent      = act;
+  document.getElementById('narr-title').textContent    = title;
+  document.getElementById('narr-subtitle').textContent = subtitle;
+  overlay.style.display = 'flex';
+  requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('visible')));
+}
 
-  // Vider le suivi
-  const store  = getSuiviStore();
-  const active = Object.values(store).filter(a => a.status !== 'rejected');
-  active.forEach(a => delete store[a.id]);
+function hideNarrationOverlay() {
+  const overlay = document.getElementById('demo-narration');
+  if (!overlay) return;
+  overlay.classList.remove('visible');
+  setTimeout(() => { overlay.style.display = 'none'; }, 420);
+}
+
+/* ─── Demo modal helpers ─────────────────────────────────────────────────── */
+function showDemoModal() {
+  const modal = document.getElementById('demo-mode-modal');
+  if (!modal) return;
+  requestAnimationFrame(() => modal.classList.add('visible'));
+}
+
+function hideDemoModal() {
+  const modal = document.getElementById('demo-mode-modal');
+  if (!modal) return;
+  modal.classList.remove('visible');
+}
+
+function startDemoMode(mode) {
+  _demoMode = mode;
+  hideDemoModal();
+  setTimeout(() => _launchDemoInternal(), 380);
+}
+
+function demoPressNext() {
+  if (_demoNextResolver) _demoNextResolver();
+}
+
+/* ─── launchDemo — shows modal first ────────────────────────────────────── */
+function launchDemo() {
+  if (_demoActive) return;
+  showDemoModal();
+}
+
+/* ─── _launchDemoInternal — actual engine start ──────────────────────────── */
+async function _launchDemoInternal() {
+  if (_demoActive) return;
+
+  // Forcer T1 si on n'y est pas
+  if (currentTier !== 1) {
+    const t1Btn = document.querySelector('[data-tier-btn="1"]');
+    if (t1Btn) t1Btn.click();
+    await new Promise(r => setTimeout(r, 500));
+  }
+
+  // Partir d'un suivi vide pour un départ propre
+  const store = getSuiviStore();
+  Object.keys(store).forEach(k => delete store[k]);
   saveSuiviStore(store);
   renderSuivi();
 
-  // Re-render leviers pour retirer l'état validé
-  if (_currentLeversScorecard) renderLevers(_currentLeversScorecard, getCurrentBuName() || '');
+  // Clear les leviers précédents
+  const leversContent = document.getElementById('levers-content');
+  if (leversContent) leversContent.innerHTML = '';
+  const leversEmpty = document.getElementById('levers-empty');
+  if (leversEmpty) leversEmpty.style.display = 'block';
+  _currentLeversScorecard = null;
 
-  // Cacher le bouton reset
-  const resetBtn = document.getElementById('reset-demo-btn');
-  if (resetBtn) resetBtn.style.display = 'none';
+  // Lancer le scénario principal
+  await demoEngine(SCENARIO_MAIN);
+}
 
-  toast('Démo réinitialisée');
+/* ─── skipDemo ───────────────────────────────────────────────────────────── */
+function skipDemo() {
+  _demoActive = false;
+  // Débloquer le mode manuel si en attente
+  if (_demoNextResolver) {
+    _demoNextResolver();
+    _demoNextResolver = null;
+  }
+  const nextBtn = document.getElementById('demo-next-btn');
+  if (nextBtn) nextBtn.style.display = 'none';
+  hideNarrationOverlay();
+  const skipBtn = document.getElementById('skip-demo-btn');
+  if (skipBtn) skipBtn.style.display = 'none';
+  toast('Demo skipped — dashboard in normal mode');
+}
+
+/* ─── resetDemo (rewired) ────────────────────────────────────────────────── */
+function resetDemo() {
+  _demoActive = false;
+  if (_demoNextResolver) { _demoNextResolver(); _demoNextResolver = null; }
+  const nextBtn = document.getElementById('demo-next-btn');
+  if (nextBtn) nextBtn.style.display = 'none';
+  hideNarrationOverlay();
+
+  // Vider le suivi
+  const store = getSuiviStore();
+  Object.keys(store).forEach(k => delete store[k]);
+  saveSuiviStore(store);
+  renderSuivi();
+
+  // Clear leviers
+  const leversContent = document.getElementById('levers-content');
+  if (leversContent) leversContent.innerHTML = '';
+  const leversEmpty = document.getElementById('levers-empty');
+  if (leversEmpty) leversEmpty.style.display = 'block';
+  _currentLeversScorecard = null;
+
+  // Masquer les boutons démo
+  ['reset-demo-btn', 'skip-demo-btn'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.style.display = 'none';
+  });
+
+  // Scroll haut
+  document.getElementById('scorecard')?.scrollIntoView({ behavior: 'smooth' });
+
+  toast('Demo reset — dashboard ready for a new run');
 }
 
 function _updateSuiviBadge(active) {
